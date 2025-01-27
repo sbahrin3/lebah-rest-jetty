@@ -98,8 +98,7 @@ public abstract class RestRequest extends JSONData {
 		
 		init(req, res);
 		try {
-			
-			
+						
 			res.setStatus(HttpServletResponse.SC_OK);
 			jsonIn = getJSONInput(req);
 			
@@ -143,9 +142,9 @@ public abstract class RestRequest extends JSONData {
 			pathInfo = pathInfo.substring(pathInfo.indexOf("/") + 1);
 			if ( pathInfo.indexOf("/") > 0 ) 
 				command = pathInfo.substring(pathInfo.indexOf("/"));
-			
-			
+						
 			if ( command == null ) command = "";
+			if ( command.equals("") ) command = "/";
 			
 			Method[] methods = getClass().getDeclaredMethods();
 			
@@ -304,11 +303,13 @@ public abstract class RestRequest extends JSONData {
 	}
 	
 	/*
-	 * This method convert an object to a response map
+	 * This method convert an object to a json and then to a response map
 	 */
 	public Map<String, Object> convertToResponse(Object object) {
 		Gson gson = new Gson();
+		//convert object to json
 		String json = gson.toJson(object);
+		//convert json to map 
 		Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
 		Map<String, Object> map = gson.fromJson(json, mapType);
 		return map;
