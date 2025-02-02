@@ -34,17 +34,17 @@ public abstract class RestBase implements RestServlet {
         String http = req.getRequestURL().toString().substring(0, req.getRequestURL().toString().indexOf("://") + 3);
         String serverUrl = http + server;		
 		String uri = req.getRequestURI();
+				
 		String s1 = uri.substring(1);
-		String appName = s1.substring(0, s1.indexOf("/"));
+		
+		String appName = s1.indexOf("/") > -1 ? s1.substring(0, s1.indexOf("/")) : "";
         String url = serverUrl + "/" + appName;
+        
 		return url;
 	}
 	
 	void init(HttpServletRequest req, HttpServletResponse res)  throws IOException, ServletException {
 
-		res.addHeader("Access-Control-Allow-Origin", "*");
-        res.addHeader("Access-Control-Allow-Methods","GET, OPTIONS, HEAD, PUT, POST");
-        
 		serverUrl = getServerUrl(req);
 		out = res.getWriter();
 	}

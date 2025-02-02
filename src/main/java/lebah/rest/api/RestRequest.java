@@ -24,6 +24,7 @@ import lebah.rest.servlets.Get;
 import lebah.rest.servlets.Patch;
 import lebah.rest.servlets.Post;
 import lebah.rest.servlets.Put;
+import qard.services.DataNotFoundException;
 
 /**
  * 
@@ -61,8 +62,12 @@ public abstract class RestRequest extends JSONData {
 	}
 	
 	
-	protected String getParamValue(String paramName) {
-		return (String) httpServletRequest.getAttribute(paramName);
+	protected String getPathVariable(String variableName) {
+		return (String) httpServletRequest.getAttribute(variableName);
+	}
+	
+	protected String getRequestParameter(String paramName) {
+		return httpServletRequest.getParameter(paramName);
 	}
 	
 	public Object doPost() throws Exception {
@@ -110,22 +115,19 @@ public abstract class RestRequest extends JSONData {
 			out.print(json);
 			
 			
-			
 		} catch ( Exception e ) {
 			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			
 			e.printStackTrace();
+			System.out.println("CAUSEDBY: " + e.getMessage());
 
-            try {
-				
-            	response.put("status", "error");
-				response.put("exceptionStackTrace", getExceptionStackTrace(e));
-				out.print(response);
-				
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+        	response.put("status", "error");
+        	response.put("causedby", e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+        	
+        	Gson gson = new Gson();
+	        String json = gson.toJson(response);
+			out.print(json);
+
 		}
 	}
 	
@@ -152,6 +154,7 @@ public abstract class RestRequest extends JSONData {
 				findStaticMethodToInvoke(action, command, methods);	
 				if ( !found ) findDynamicMethodToInvoke(action, command, methods);	
 			} catch ( Exception e ) {
+				e.printStackTrace();
 				throw e;
 			}
 			
@@ -222,7 +225,7 @@ public abstract class RestRequest extends JSONData {
 
 	
 	public boolean invokeStaticMethod(String annotationPattern, String command, Method method) throws Exception {
-		
+
 		if ( annotationPattern.equals(command)) {
 			
 			Class<?>[] parameterTypes = method.getParameterTypes();
@@ -313,6 +316,15 @@ public abstract class RestRequest extends JSONData {
 		Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
 		Map<String, Object> map = gson.fromJson(json, mapType);
 		return map;
+	}
+	
+	public void sendAsResponse(Object object) {
+		Gson gson = new Gson();
+		//convert object to json
+		String json = gson.toJson(object);
+		//convert json to map 
+		Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
+		response = gson.fromJson(json, mapType);
 	}
 
 }

@@ -2,7 +2,6 @@ package lebah.rest.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.stream.Stream;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -16,8 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import lebah.rest.jetty.Config;
-
 /**
  * 
  * @author shamsulbahrin
@@ -29,15 +26,18 @@ public class RestTemplate extends HttpServlet {
 	
 	protected String[] params = null;
 	
-
 	public static String getAuthorizationHeader(HttpServletRequest req) {
 		return req.getHeader("Authorization");
 	}
 
 	private void addCorsHeaders(HttpServletResponse response) {
+		
+		System.out.println("Rest Template: addCorsHeaders");
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH");
-		response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+		response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, hx-request, hx-current-url, hx-trigger, hx-target, hx-swap");
+		
+
 	}
 
 	public void doOptions(HttpServletRequest request, HttpServletResponse response)
@@ -52,7 +52,6 @@ public class RestTemplate extends HttpServlet {
 		chain.doFilter(req, res);
 	}
 
-
 	public void doGet(HttpServletRequest req, HttpServletResponse res)  throws ServletException, IOException    {
 		doService(req, res, "get");
 	}
@@ -63,7 +62,6 @@ public class RestTemplate extends HttpServlet {
 	}
 	
 	public void doPut(HttpServletRequest req, HttpServletResponse res)  throws ServletException, IOException    {
-		System.out.println("RestTemplate PUT");
 		doService(req, res, "put");
 	}
 	
@@ -75,14 +73,21 @@ public class RestTemplate extends HttpServlet {
 		doService(req, res, "patch");
 	}
 	
-	
 	public void doService(HttpServletRequest req, HttpServletResponse res, String action) throws ServletException, IOException  {
+		
+		System.out.println("RestTemplate doService");
+		addCorsHeaders(res);
+		
+        res.setContentType("application/json");
+        res.setCharacterEncoding("UTF-8");
 		
 		String controllerPath = (String) req.getServletContext().getAttribute("controllerPath");
 		if ( controllerPath == null ) controllerPath = "";
 
 		PrintWriter out = res.getWriter();
 		String pathInfo = req.getPathInfo();
+		
+		System.out.println("pathInfo = " + pathInfo);
 		
 		if ( pathInfo != null && !"".equals(pathInfo) ) {
 						
@@ -131,7 +136,7 @@ public class RestTemplate extends HttpServlet {
 			} catch ( Exception ex ) {
 				res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 				ex.printStackTrace();
-				out.print("Module Error: " + module);
+				//out.print("Module Error: " + module);
 			}	
 		}
 		else {

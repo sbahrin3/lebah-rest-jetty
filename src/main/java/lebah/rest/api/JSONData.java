@@ -12,7 +12,6 @@ public abstract class JSONData  extends RestBase {
 
 	public abstract Object doAction(HttpServletRequest req, HttpServletResponse res, String action) throws Exception;
 
-	
 	public void doService(HttpServletRequest req, HttpServletResponse res, String action) throws Exception {
 		init(req, res);
 		try {
