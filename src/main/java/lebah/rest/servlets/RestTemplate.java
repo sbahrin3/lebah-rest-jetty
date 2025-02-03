@@ -86,9 +86,7 @@ public class RestTemplate extends HttpServlet {
 
 		PrintWriter out = res.getWriter();
 		String pathInfo = req.getPathInfo();
-		
-		System.out.println("pathInfo = " + pathInfo);
-		
+				
 		if ( pathInfo != null && !"".equals(pathInfo) ) {
 						
 			pathInfo = pathInfo.substring(pathInfo.indexOf("/") + 1);
@@ -140,7 +138,6 @@ public class RestTemplate extends HttpServlet {
 			}	
 		}
 		else {
-			
 			
 			JSONObject obj = new JSONObject();
 			try {

@@ -24,7 +24,6 @@ import lebah.rest.servlets.Get;
 import lebah.rest.servlets.Patch;
 import lebah.rest.servlets.Post;
 import lebah.rest.servlets.Put;
-import qard.services.DataNotFoundException;
 
 /**
  * 
@@ -95,6 +94,11 @@ public abstract class RestRequest extends JSONData {
 		return response;
 	}
 	
+	
+	/**
+	 * Main method being called
+	 */
+	
 	public void doService(HttpServletRequest req, HttpServletResponse res, String action, String[] params) 
 			throws IOException, ServletException {
 		this.httpServletRequest = req;
@@ -116,19 +120,38 @@ public abstract class RestRequest extends JSONData {
 			
 			
 		} catch ( Exception e ) {
-			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			
-			e.printStackTrace();
-			System.out.println("CAUSEDBY: " + e.getMessage());
+		    Throwable cause = getRootCause(e); 
+		    System.out.println("CAUSEDBY: " + cause);
+		    
+		    if ( cause instanceof MethodNotFoundException ) {
+		    	res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+		    } else if ( cause instanceof DataNotFoundException ) {
+		    	res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+		    } else if ( cause instanceof DuplicateIdentificationException) {
+		        res.setStatus(HttpServletResponse.SC_CONFLICT);
+		    } else {
+		        res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		    }
+			
+			//e.printStackTrace();
 
         	response.put("status", "error");
-        	response.put("causedby", e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+        	response.put("causedby", cause.getMessage());
         	
         	Gson gson = new Gson();
 	        String json = gson.toJson(response);
 			out.print(json);
 
 		}
+	}
+	
+	private Throwable getRootCause(Throwable throwable) {
+	    Throwable cause = throwable;
+	    while (cause.getCause() != null && cause.getCause() != cause) {
+	        cause = cause.getCause();
+	    }
+	    return cause;
 	}
 	
 
@@ -154,7 +177,7 @@ public abstract class RestRequest extends JSONData {
 				findStaticMethodToInvoke(action, command, methods);	
 				if ( !found ) findDynamicMethodToInvoke(action, command, methods);	
 			} catch ( Exception e ) {
-				e.printStackTrace();
+				//e.printStackTrace();
 				throw e;
 			}
 			
@@ -308,16 +331,6 @@ public abstract class RestRequest extends JSONData {
 	/*
 	 * This method convert an object to a json and then to a response map
 	 */
-	public Map<String, Object> convertToResponse(Object object) {
-		Gson gson = new Gson();
-		//convert object to json
-		String json = gson.toJson(object);
-		//convert json to map 
-		Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
-		Map<String, Object> map = gson.fromJson(json, mapType);
-		return map;
-	}
-	
 	public void sendAsResponse(Object object) {
 		Gson gson = new Gson();
 		//convert object to json
