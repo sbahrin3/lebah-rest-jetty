@@ -37,15 +37,14 @@ public class Users extends RestRequest {
 	public void listUsers() throws Exception {
 		List<User> users = UserService.listUsers();
 		response.put("count", users.size());
-		response.put("data", users.stream().map(u -> new UserDataResponse(u)).collect(Collectors.toList()));
+		response.put("list", users.stream().map(u -> new UserDataResponse(u)).collect(Collectors.toList()));
 	}
 
 	@Post("/login")
 	public void login(LoginRequest loginRequest) throws Exception {
 		User user = UserService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
 		if ( user != null ) {
-			response.put("success", "true");
-			response.put("data", new UserDataResponse(user));
+			sendAsResponse(new UserDataResponse(user));
 		} else 
 			throw new DataNotFoundException();
 	

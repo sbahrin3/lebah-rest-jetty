@@ -3,6 +3,9 @@ package demo.services;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
+
+import com.github.javafaker.Faker;
 
 import demo.data.UserDataRequest;
 import demo.entity.User;
@@ -21,27 +24,35 @@ public class UserService {
 	public static void initializeDemoData() {
 		System.out.println("Initialize Demo Data");
 		usersData = new ArrayList<>();
-		usersData.add(new User("ali@gmail.com", "1234", "Ali", "Baba"));
-		usersData.add(new User("dino@gmail.com", "1234", "Iszuddin", "Ismail"));
-		usersData.add(new User("jafar@gmail.com", "1234", "Jafar", "Darwis"));
-		usersData.add(new User("faizal@gmail.com", "1234", "Faizal", "Hassan"));
-		usersData.add(new User("hazwan@gmail.com", "1234", "Hazwan", "Ali"));
+		
+		Faker faker = new Faker();
+		for ( int i=0; i < 167; i++ ) {
+	        String firstName = faker.name().firstName();
+	        String lastName = faker.name().lastName();
+	        String email = faker.internet().emailAddress();
+	        usersData.add(new User(email, "1234", firstName, lastName));
+	        
+		}
+		
+        
 		System.out.println("Demo users records = " + usersData.size());
 	}
 	
-	public static void registerUser(String username, String password, String firstName, String lastName) throws Exception {
-		User user = new User(username, password, firstName, lastName);
+	public static User registerUser(UserDataRequest udr) throws Exception {
+		User user = new User();
+		if ( udr.getUsername() != null ) user.setUsername(udr.getUsername());
+		if ( udr.getFirstName() != null ) user.setFirstName(udr.getFirstName());
+		if ( udr.getLastName() != null ) user.setLastName(udr.getLastName());
+		if ( udr.getPassword() != null ) user.setPassword(udr.getPassword());
 		usersData.add(user);
-	}
+		return user;	}
 	
-	public static void registerUser(UserDataRequest udr) throws Exception {
-		registerUser(udr.getUsername(), udr.getPassword(), udr.getFirstName(), udr.getLastName());
-	}
-	
-	public static void updateUser(String username, String firstName, String lastName) throws Exception {
-		User user = findUser(username);
-		user.setFirstName(firstName);
-		user.setLastName(lastName);
+	public static User updateUser(UserDataRequest udr) throws Exception {
+		User user = findUser(udr.getUsername());
+		if ( udr.getFirstName() != null ) user.setFirstName(udr.getFirstName());
+		if ( udr.getLastName() != null ) user.setLastName(udr.getLastName());
+		if ( udr.getPassword() != null ) user.setPassword(udr.getPassword());
+		return user;
 	}
 	
 	public static List<User> listUsers() throws Exception {
