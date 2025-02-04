@@ -25,29 +25,12 @@ import lebah.rest.servlets.Put;
 
 public class Users extends RestRequest {
 	
-	@Post("/update/{userId}/spouse/{spouseId}/child/{childId}")
-	public void testMethod(TestingRequest testingRequest) throws Exception {
-		System.out.println("Testing Only");
-		String userId = this.getPathVariable("userId");
-		String spouseId = getPathVariable("spouseId");
-		String childId = getPathVariable("childId");
-		
-		String parameter1 = testingRequest.getParameter1();
-		String parameter2 = testingRequest.getParameter2();
-		System.out.println("parameter1 = " + parameter1);
-		System.out.println("parameter2 = " + parameter2);
-		
-		response.put("userId", userId);
-		response.put("spouseId", spouseId);
-		response.put("childId", childId);
-		response.put("testingRequest", testingRequest);
-	}
+	
 	
 	@Post("/")
 	public void registerUser(UserDataRequest udr) throws Exception {
-		UserService.registerUser(udr);
-		response.put("status", "success");
-		response.put("message", "User successfully registered.");
+		User user = UserService.registerUser(udr);
+		sendAsResponse(new UserDataResponse(user));
 	}
 	
 	@Get("/")
@@ -90,5 +73,23 @@ public class Users extends RestRequest {
 		response.put("message", "DELETE user profile: " + userId);
 	}
 	
+	
+	@Post("/update/{userId}/spouse/{spouseId}/child/{childId}")
+	public void testMethod(TestingRequest testingRequest) throws Exception {
+		System.out.println("Testing Only");
+		String userId = this.getPathVariable("userId");
+		String spouseId = getPathVariable("spouseId");
+		String childId = getPathVariable("childId");
+		
+		String parameter1 = testingRequest.getParameter1();
+		String parameter2 = testingRequest.getParameter2();
+		System.out.println("parameter1 = " + parameter1);
+		System.out.println("parameter2 = " + parameter2);
+		
+		response.put("userId", userId);
+		response.put("spouseId", spouseId);
+		response.put("childId", childId);
+		response.put("testingRequest", testingRequest);
+	}
 
 }
