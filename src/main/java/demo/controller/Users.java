@@ -28,9 +28,9 @@ public class Users extends RestRequest {
 	@Post("/update/{userId}/spouse/{spouseId}/child/{childId}")
 	public void testMethod(TestingRequest testingRequest) throws Exception {
 		System.out.println("Testing Only");
-		String userId = getParamValue("userId");
-		String spouseId = getParamValue("spouseId");
-		String childId = getParamValue("childId");
+		String userId = this.getPathVariable("userId");
+		String spouseId = getPathVariable("spouseId");
+		String childId = getPathVariable("childId");
 		
 		String parameter1 = testingRequest.getParameter1();
 		String parameter2 = testingRequest.getParameter2();
@@ -43,19 +43,14 @@ public class Users extends RestRequest {
 		response.put("testingRequest", testingRequest);
 	}
 	
-	private String getParamValue(String string) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Post("/register")
+	@Post("/")
 	public void registerUser(UserDataRequest udr) throws Exception {
 		UserService.registerUser(udr);
 		response.put("status", "success");
 		response.put("message", "User successfully registered.");
 	}
 	
-	@Get("/list")
+	@Get("/")
 	public void listUsers() throws Exception {
 		List<User> users = UserService.listUsers();
 		response.put("count", users.size());
@@ -76,14 +71,14 @@ public class Users extends RestRequest {
 	
 	@Get("/{userId}")
 	public void getUser() throws Exception {
-		User user = UserService.findUser(getParamValue("userId"));
+		User user = UserService.findUser(getPathVariable("userId"));
 		if ( user != null ) sendAsResponse(new UserDataResponse(user));
 		else throw new DataNotFoundException();
 	}
 	
 	@Put("/{userId}")
 	public void updateUser() throws Exception {
-		String userId = getParamValue("userId");
+		String userId = getPathVariable("userId");
 		response.put("message", "UPDATE user profile: " + userId);
 		
 		
@@ -91,7 +86,7 @@ public class Users extends RestRequest {
 	
 	@Delete("/{userId}")
 	public void deleteUser() throws Exception {
-		String userId = getParamValue("userId");
+		String userId = getPathVariable("userId");
 		response.put("message", "DELETE user profile: " + userId);
 	}
 	
