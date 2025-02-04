@@ -46,10 +46,9 @@ public class Users extends RestRequest {
 		if ( user != null ) {
 			response.put("success", "true");
 			response.put("data", new UserDataResponse(user));
-		} else {
-			response.put("success", "false");
-			response.put("securityToken", "");
-		}
+		} else 
+			throw new DataNotFoundException();
+	
 	}
 	
 	@Get("/{userId}")
