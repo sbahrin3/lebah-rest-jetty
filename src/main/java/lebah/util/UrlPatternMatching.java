@@ -1,4 +1,4 @@
-package lebah.rest.api;
+package lebah.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;

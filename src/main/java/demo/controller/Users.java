@@ -43,6 +43,11 @@ public class Users extends RestRequest {
 		response.put("testingRequest", testingRequest);
 	}
 	
+	private String getParamValue(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	@Post("/register")
 	public void registerUser(UserDataRequest udr) throws Exception {
 		UserService.registerUser(udr);
@@ -72,7 +77,7 @@ public class Users extends RestRequest {
 	@Get("/{userId}")
 	public void getUser() throws Exception {
 		User user = UserService.findUser(getParamValue("userId"));
-		if ( user != null ) response = convertToResponse(user);
+		if ( user != null ) sendAsResponse(new UserDataResponse(user));
 		else throw new DataNotFoundException();
 	}
 	
@@ -90,26 +95,5 @@ public class Users extends RestRequest {
 		response.put("message", "DELETE user profile: " + userId);
 	}
 	
-
-
-	public static void main(String[] args) throws Exception {
-				
-		LoginRequest login = new LoginRequest();
-		login.setUsername("faizal");
-		login.setPassword("1234");
-		
-		Gson gson = new Gson();
-		String json = gson.toJson(login);
-		
-		Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
-		Map<String, Object> map = gson.fromJson(json, mapType);
-		
-		System.out.println(map);
-		
-	}
-	
-
-	
-
 
 }

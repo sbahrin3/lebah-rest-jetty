@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.mysql.cj.log.Log;
 
 import lebah.rest.servlets.Delete;
 import lebah.rest.servlets.Get;
@@ -38,14 +39,41 @@ public abstract class RestRequest extends JSONData {
 	protected String[] params;
 	protected HttpServletRequest httpServletRequest;
 	protected HttpServletResponse httpServletResponse;
-	
-	
 	private boolean found = false;
 	
-	
-	/*
-	 * This is the Main method 
+	/**
+	 * Main method being called
 	 */
+	
+	public void doService(HttpServletRequest req, HttpServletResponse res, String action, String[] params) 
+			throws IOException, ServletException {
+		this.httpServletRequest = req;
+		this.httpServletResponse = res;
+		this.params = params;
+		
+		init(req, res);
+		try {
+						
+			jsonIn = getJSONInput(req);
+			
+			Object obj = doAction(req, res, action);
+						
+			res.setStatus(HttpServletResponse.SC_OK);
+			out.print(new Gson().toJson(obj));
+			
+			
+		} catch ( Exception e ) {
+			e.printStackTrace();
+			Throwable cause = ResponseExceptionHandler.getRootCause(e);
+					    
+		    ResponseExceptionHandler.setResponseErrorStatus(cause, res);
+
+		    response.put("message", cause.getMessage() != null ? cause.getMessage() : "Message Not Defined.");
+        	
+			out.print(new Gson().toJson(response));
+
+		}
+	}
 	
 	public Object doAction(HttpServletRequest req, HttpServletResponse res, String action) throws Exception {
 		
@@ -93,69 +121,6 @@ public abstract class RestRequest extends JSONData {
 		selectMethodToInvoke("delete");
 		return response;
 	}
-	
-	
-	/**
-	 * Main method being called
-	 */
-	
-	public void doService(HttpServletRequest req, HttpServletResponse res, String action, String[] params) 
-			throws IOException, ServletException {
-		this.httpServletRequest = req;
-		this.httpServletResponse = res;
-		this.params = params;
-		
-		init(req, res);
-		try {
-						
-			res.setStatus(HttpServletResponse.SC_OK);
-			jsonIn = getJSONInput(req);
-			
-			Object obj = doAction(req, res, action);
-			
-	        Gson gson = new Gson();
-	        String json = gson.toJson(obj);
-			
-			out.print(json);
-			
-			
-		} catch ( Exception e ) {
-			
-		    Throwable cause = getRootCause(e); 
-		    System.out.println("CAUSEDBY: " + cause);
-		    
-		    if ( cause instanceof MethodNotFoundException ) {
-		    	res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-		    } else if ( cause instanceof DataNotFoundException ) {
-		    	res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-		    } else if ( cause instanceof DuplicateIdentificationException) {
-		        res.setStatus(HttpServletResponse.SC_CONFLICT);
-		    } else {
-		        res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-		    }
-			
-			//e.printStackTrace();
-
-        	response.put("status", "error");
-        	response.put("causedby", cause.getMessage());
-        	
-        	Gson gson = new Gson();
-	        String json = gson.toJson(response);
-			out.print(json);
-
-		}
-	}
-	
-	private Throwable getRootCause(Throwable throwable) {
-	    Throwable cause = throwable;
-	    while (cause.getCause() != null && cause.getCause() != cause) {
-	        cause = cause.getCause();
-	    }
-	    return cause;
-	}
-	
-
-	
 	
 	private void selectMethodToInvoke(String action) throws Exception {
 		try {
@@ -208,40 +173,39 @@ public abstract class RestRequest extends JSONData {
 		}
 	}
 
-	private String getAnnotationPattern(String action, Method m) {
-		String annotationPattern = "";
+	private String getAnnotationPattern(String action, Method method) {
 		if ( "post".equals(action)) {
-			if ( m.isAnnotationPresent(Post.class)) {
-				Post c = m.getAnnotation(Post.class);	
-				annotationPattern = c.value();
+			if ( method.isAnnotationPresent(Post.class)) {
+				Post cmd = method.getAnnotation(Post.class);	
+				return cmd.value();
 			}
 		}
 		else if ( "get".equals(action)) {
-			if ( m.isAnnotationPresent(Get.class)) {
-				Get c = m.getAnnotation(Get.class);	
-				annotationPattern = c.value();
+			if ( method.isAnnotationPresent(Get.class)) {
+				Get cmd = method.getAnnotation(Get.class);	
+				return cmd.value();
 			}
 			
 		}
 		else if ( "delete".equals(action)) {
-			if ( m.isAnnotationPresent(Delete.class)) {
-				Delete c = m.getAnnotation(Delete.class);	
-				annotationPattern = c.value();
+			if ( method.isAnnotationPresent(Delete.class)) {
+				Delete cmd = method.getAnnotation(Delete.class);	
+				return cmd.value();
 			}
 		}
 		else if ( "put".equals(action)) {
-			if ( m.isAnnotationPresent(Put.class)) {
-				Put c = m.getAnnotation(Put.class);	
-				annotationPattern = c.value();
+			if ( method.isAnnotationPresent(Put.class)) {
+				Put cmd = method.getAnnotation(Put.class);	
+				return cmd.value();
 			}
 		}
 		else if ( "patch".equals(action)) {
-			if ( m.isAnnotationPresent(Patch.class)) {
-				Patch c = m.getAnnotation(Patch.class);	
-				annotationPattern = c.value();
+			if ( method.isAnnotationPresent(Patch.class)) {
+				Patch cmd = method.getAnnotation(Patch.class);	
+				return cmd.value();
 			}
 		}
-		return annotationPattern;
+		return "";
 	}
 	
 	
@@ -320,6 +284,10 @@ public abstract class RestRequest extends JSONData {
         PrintWriter printWriter = new PrintWriter(stringWriter);
         e.printStackTrace(printWriter);
         return stringWriter.toString();
+	}
+	
+	public String getQueryString() {
+		return httpServletRequest.getQueryString();
 	}
 
 
