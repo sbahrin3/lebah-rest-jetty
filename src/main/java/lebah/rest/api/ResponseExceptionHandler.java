@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 public class ResponseExceptionHandler {
 
 	private static final Map<Class<? extends Throwable>, Integer> EXCEPTION_STATUS_MAP = Map.of(
-			MethodNotFoundException.class, HttpServletResponse.SC_BAD_REQUEST, 
+			MethodNotFoundException.class, HttpServletResponse.SC_NOT_IMPLEMENTED, 
 			DataNotFoundException.class, HttpServletResponse.SC_NOT_FOUND, 
 			DuplicateIdentificationException.class, HttpServletResponse.SC_CONFLICT
 			);
