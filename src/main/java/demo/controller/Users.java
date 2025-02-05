@@ -1,12 +1,7 @@
 package demo.controller;
 
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import demo.data.LoginRequest;
 import demo.data.TestingRequest;
@@ -15,6 +10,7 @@ import demo.data.UserDataResponse;
 import demo.entity.User;
 import demo.services.UserService;
 import lebah.rest.api.DataNotFoundException;
+import lebah.rest.api.DuplicateIdentificationException;
 import lebah.rest.api.RestRequest;
 import lebah.rest.servlets.Delete;
 import lebah.rest.servlets.Get;
@@ -71,8 +67,15 @@ public class Users extends RestRequest {
 		response.put("message", "DELETE user profile: " + userId);
 	}
 	
+	@Get("/email/{email}")
+	public void getUserByEmail() throws Exception {
+		User user = UserService.findUser(getPathVariable("email"));
+		if ( user != null ) sendAsResponse(new UserDataResponse(user));
+		else throw new DataNotFoundException();
+	}
 	
-	@Post("/update/{userId}/spouse/{spouseId}/child/{childId}")
+	
+	@Post("/{userId}/spouse/{spouseId}/child/{childId}")
 	public void testMethod(TestingRequest testingRequest) throws Exception {
 		System.out.println("Testing Only");
 		String userId = this.getPathVariable("userId");
