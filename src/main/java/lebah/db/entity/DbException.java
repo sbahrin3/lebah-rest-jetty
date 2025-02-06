@@ -8,7 +8,7 @@ public class DbException extends Exception {
 	}
 	
 	public DbException() {
-		super();
+		super("Database Related Error.");
 	}
 
 	public DbException(String message, Exception e) {

@@ -1,4 +1,4 @@
-package lebah.rest.api;
+package lebah.rest.api.exception;
 
 //422
 public class MethodNotFoundException extends Exception {

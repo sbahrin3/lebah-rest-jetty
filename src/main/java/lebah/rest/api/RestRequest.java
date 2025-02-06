@@ -18,8 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.mysql.cj.log.Log;
 
+import lebah.rest.api.exception.MethodNotFoundException;
+import lebah.rest.api.exception.ApiResponseException;
 import lebah.rest.servlets.Delete;
 import lebah.rest.servlets.Get;
 import lebah.rest.servlets.Patch;
@@ -34,11 +35,8 @@ import lebah.rest.servlets.Put;
 
 public abstract class RestRequest extends JSONData {
 	
-	//protected JSONObject jsonOut =  new JSONObject();
 	protected Map<String, Object> response = new HashMap<>();
-	protected String[] params;
-	protected HttpServletRequest httpServletRequest;
-	protected HttpServletResponse httpServletResponse;
+	private HttpServletRequest httpServletRequest;
 	private boolean found = false;
 	
 	/**
@@ -47,11 +45,11 @@ public abstract class RestRequest extends JSONData {
 	
 	public void doService(HttpServletRequest req, HttpServletResponse res, String action, String[] params) 
 			throws IOException, ServletException {
-		this.httpServletRequest = req;
-		this.httpServletResponse = res;
-		this.params = params;
 		
+		this.httpServletRequest = req;
+
 		init(req, res);
+		
 		try {
 						
 			jsonIn = getJSONInput(req);
@@ -63,13 +61,17 @@ public abstract class RestRequest extends JSONData {
 			
 			
 		} catch ( Exception e ) {
+			
 			e.printStackTrace();
 			Throwable cause = ResponseExceptionHandler.getRootCause(e);
-					    
-		    ResponseExceptionHandler.setResponseErrorStatus(cause, res);
+			
+			if ( cause instanceof ApiResponseException ) {
+				res.setStatus(((ApiResponseException ) cause).getStatus());
+			} else {
+				res.setStatus(ResponseExceptionHandler.getStatus(cause));
+			}
 
 		    response.put("message", cause.getMessage() != null ? cause.getMessage() : "Message Not Defined.");
-        	
 			out.print(new Gson().toJson(response));
 
 		}
@@ -125,16 +127,13 @@ public abstract class RestRequest extends JSONData {
 	private void selectMethodToInvoke(String action) throws Exception {
 		try {
 			
-			String command = "";
 			
 			String pathInfo = httpServletRequest.getPathInfo();
-		
 			pathInfo = pathInfo.substring(pathInfo.indexOf("/") + 1);
-			if ( pathInfo.indexOf("/") > 0 ) 
-				command = pathInfo.substring(pathInfo.indexOf("/"));
-						
-			if ( command == null ) command = "";
-			if ( command.equals("") ) command = "/";
+			String command = pathInfo.indexOf("/") > 0 ? pathInfo.substring(pathInfo.indexOf("/")) : "";		
+			if ( command == null || command.equals("") ) command = "/";
+			
+			System.out.println("command = " + command);
 			
 			Method[] methods = getClass().getDeclaredMethods();
 			
@@ -142,13 +141,12 @@ public abstract class RestRequest extends JSONData {
 				findStaticMethodToInvoke(action, command, methods);	
 				if ( !found ) findDynamicMethodToInvoke(action, command, methods);	
 			} catch ( Exception e ) {
-				//e.printStackTrace();
 				throw e;
 			}
 			
-			if ( !found ) {
+			if ( !found ) 
 				throw new MethodNotFoundException();
-			}
+			
 			
 		} catch ( Exception e ) {
 			throw e;

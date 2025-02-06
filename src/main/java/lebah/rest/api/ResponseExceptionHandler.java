@@ -4,6 +4,11 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import lebah.rest.api.exception.BadRequestException;
+import lebah.rest.api.exception.DataNotFoundException;
+import lebah.rest.api.exception.MethodNotFoundException;
+import lebah.rest.api.exception.ResourceConflictException;
+
 
 /**
  * 
@@ -14,13 +19,12 @@ public class ResponseExceptionHandler {
 	private static final Map<Class<? extends Throwable>, Integer> EXCEPTION_STATUS_MAP = Map.of(
 			MethodNotFoundException.class, HttpServletResponse.SC_NOT_IMPLEMENTED, 
 			DataNotFoundException.class, HttpServletResponse.SC_NOT_FOUND, 
-			DuplicateIdentificationException.class, HttpServletResponse.SC_CONFLICT
+			ResourceConflictException.class, HttpServletResponse.SC_CONFLICT,
+			BadRequestException.class, HttpServletResponse.SC_BAD_REQUEST
 			);
 
-	public static void setResponseErrorStatus(Throwable cause, HttpServletResponse res) {
-		int status = EXCEPTION_STATUS_MAP.getOrDefault(cause.getClass(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-		res.setStatus(status);
-		
+	public static int getStatus(Throwable cause) {
+		return EXCEPTION_STATUS_MAP.getOrDefault(cause.getClass(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 	}
 	
 	/**

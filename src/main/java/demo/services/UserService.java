@@ -9,8 +9,8 @@ import com.github.javafaker.Faker;
 
 import demo.data.UserDataRequest;
 import demo.entity.User;
-import lebah.rest.api.DataNotFoundException;
-import lebah.rest.api.DuplicateIdentificationException;
+import lebah.rest.api.exception.DataNotFoundException;
+import lebah.rest.api.exception.ResourceConflictException;
 
 
 
@@ -40,7 +40,7 @@ public class UserService {
 	}
 	
 	public static User registerUser(UserDataRequest udr) throws Exception {
-		if ( findUser(udr.getUsername()) != null) throw new DuplicateIdentificationException();
+		if ( findUser(udr.getUsername()) != null) throw new ResourceConflictException();
 		User user = new User();
 		if ( udr.getUsername() != null ) user.setUsername(udr.getUsername());
 		if ( udr.getFirstName() != null ) user.setFirstName(udr.getFirstName());

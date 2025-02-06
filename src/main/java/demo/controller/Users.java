@@ -9,9 +9,9 @@ import demo.data.UserDataRequest;
 import demo.data.UserDataResponse;
 import demo.entity.User;
 import demo.services.UserService;
-import lebah.rest.api.DataNotFoundException;
-import lebah.rest.api.DuplicateIdentificationException;
 import lebah.rest.api.RestRequest;
+import lebah.rest.api.exception.ApiResponseException;
+import lebah.rest.api.exception.DataNotFoundException;
 import lebah.rest.servlets.Delete;
 import lebah.rest.servlets.Get;
 import lebah.rest.servlets.Post;
@@ -47,7 +47,7 @@ public class Users extends RestRequest {
 	}
 	
 	@Get("/{userId}")
-	public void getUser() throws Exception {
+	public void getUser() throws Exception {		
 		User user = UserService.findUser(getPathVariable("userId"));
 		if ( user != null ) sendAsResponse(new UserDataResponse(user));
 		else throw new DataNotFoundException();
@@ -78,7 +78,7 @@ public class Users extends RestRequest {
 	@Post("/{userId}/spouse/{spouseId}/child/{childId}")
 	public void testMethod(TestingRequest testingRequest) throws Exception {
 		System.out.println("Testing Only");
-		String userId = this.getPathVariable("userId");
+		String userId = getPathVariable("userId");
 		String spouseId = getPathVariable("spouseId");
 		String childId = getPathVariable("childId");
 		
@@ -91,6 +91,15 @@ public class Users extends RestRequest {
 		response.put("spouseId", spouseId);
 		response.put("childId", childId);
 		response.put("testingRequest", testingRequest);
+	}
+	
+	@Get("/testError/{value}")
+	public void testApiResponseError() throws Exception {
+		
+		String value = getPathVariable("value");
+		if ( "0".equals(value)) throw  new ApiResponseException(513, "Incorrect given value.");
+		response.put("message", "value is " + value);
+		
 	}
 
 }
