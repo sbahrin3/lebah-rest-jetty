@@ -104,52 +104,86 @@ public class RestTemplate extends HttpServlet {
 
 			module = module.replace("/", ".");
 			String cname = module.substring(module.lastIndexOf(".") + 1);
-			cname = cname.substring(0,1).toUpperCase() + cname.substring(1);
-			module = module.substring(0, module.lastIndexOf(".")) + "." + cname;
-			try {
-				Object object = Class.forName(module).newInstance();	
-				if ( object instanceof RestServlet ) {
-					RestServlet restServlet = (RestServlet) object;
-					
-					if ( restServlet.needAuthorization() ) {
-						String authorizationHeader = getAuthorizationHeader(req);
-						//do something with authorization
+			
+			if ( !"".equals(cname)) {
+				
+				cname = cname.substring(0,1).toUpperCase() + cname.substring(1);
+				module = module.substring(0, module.lastIndexOf(".")) + "." + cname;
+				
+				try {
+					Object object = Class.forName(module).newInstance();	
+					if ( object instanceof RestServlet ) {
+						RestServlet restServlet = (RestServlet) object;
+						
+						/*
+						 * Implement HEADER AUTHORIZATION here
+						 */
+						boolean isAuthorized = true;
+						if ( restServlet.needAuthorization() ) {
+							String authorizationHeader = getAuthorizationHeader(req);
+							//do something with authorization
+							isAuthorized = AuthorizationHandler.isAuthorized(authorizationHeader);
+							//if not authorized do servlet redirection
+							
+						}
+	
+						if ( isAuthorized ) {
+							restServlet.doService(req, res, action, params);
+						} else {
+							showNotAuthorizedMessage(out);
+						}
+	
 					}
-
-					restServlet.doService(req, res, action, params);
-
-				}
-			} catch ( ClassNotFoundException cnfex ) {
-				res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				cnfex.printStackTrace();
-				out.print("Module Not Found Error: " + module);
-			} catch ( InstantiationException iex ) {
-				res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				iex.printStackTrace();
-				out.print("Module Instantiation Error: " + module);
-			} catch ( IllegalAccessException illex ) {
-				res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				illex.printStackTrace();
-				out.print("Illegal Access Error: " + module);
-			} catch ( Exception ex ) {
-				res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				ex.printStackTrace();
-				//out.print("Module Error: " + module);
-			}	
+				} catch ( ClassNotFoundException cnfex ) {
+					res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+					cnfex.printStackTrace();
+					out.print("Module Not Found Error: " + module);
+				} catch ( InstantiationException iex ) {
+					res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+					iex.printStackTrace();
+					out.print("Module Instantiation Error: " + module);
+				} catch ( IllegalAccessException illex ) {
+					res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+					illex.printStackTrace();
+					out.print("Illegal Access Error: " + module);
+				} catch ( Exception ex ) {
+					res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+					ex.printStackTrace();
+					//out.print("Module Error: " + module);
+				}	
+			}
+			else {
+		
+				showDefaultMessage(out);
+				
+			}
 		}
 		else {
 			
-			JSONObject obj = new JSONObject();
-			try {
-				obj.put("message", "Welcome to LeBAH Rest API");
-				out.print(obj);
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-			
+			showDefaultMessage(out);
 			
 		}
 
+	}
+	
+	void showDefaultMessage(PrintWriter out) {
+		JSONObject obj = new JSONObject();
+		try {
+			obj.put("message", "Welcome to LeBAH Rest API");
+			out.print(obj);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void showNotAuthorizedMessage(PrintWriter out) {
+		JSONObject obj = new JSONObject();
+		try {
+			obj.put("message", "Authorization Needed.");
+			out.print(obj);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
