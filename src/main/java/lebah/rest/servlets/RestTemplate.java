@@ -32,7 +32,6 @@ public class RestTemplate extends HttpServlet {
 
 	private void addCorsHeaders(HttpServletResponse response) {
 		
-		System.out.println("Rest Template: addCorsHeaders");
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH");
 		response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, hx-request, hx-current-url, hx-trigger, hx-target, hx-swap");
@@ -75,7 +74,6 @@ public class RestTemplate extends HttpServlet {
 	
 	public void doService(HttpServletRequest req, HttpServletResponse res, String action) throws ServletException, IOException  {
 		
-		System.out.println("RestTemplate doService");
 		addCorsHeaders(res);
 		
         res.setContentType("application/json");
