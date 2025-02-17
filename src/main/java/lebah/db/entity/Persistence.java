@@ -3,7 +3,6 @@ package lebah.db.entity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,14 +10,11 @@ import java.util.Properties;
 
 import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.boot.Metadata;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.exception.ConstraintViolationException;
 
@@ -33,7 +29,8 @@ public class Persistence {
 
 	private static SessionFactory factory = null;
 	private Transaction transaction;
-	private Session session;
+	//private Session session;
+	private static ThreadLocal<Session> threadLocalSession = ThreadLocal.withInitial(() -> null);
 
 	private String dialect = "";
 	private String driver = "";
@@ -60,7 +57,6 @@ public class Persistence {
 		try {
 			return db("default");
 		} catch (Exception e) {
-			System.out.println("Error Db: " + e.getMessage());
 			e.printStackTrace();
 			throw new DbException();
 
@@ -87,60 +83,51 @@ public class Persistence {
 		Configuration cfg = new Configuration();
 		cfg.configure();
 		factory = cfg.buildSessionFactory();
-
-		session = factory.openSession();
-
+		//session = factory.openSession();
 	}
 
-	private void createSessionFactory2() {
-		StandardServiceRegistry ssr = new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml").build(); 
-		Metadata meta = new MetadataSources(ssr).getMetadataBuilder().build();
-		factory = meta.getSessionFactoryBuilder().build();  
-
-		session = factory.openSession();
+	public Session getSession() {
+		Session session = threadLocalSession.get();
+		if (session == null || !session.isOpen()) {
+			session = factory.openSession();
+			threadLocalSession.set(session);
+		}
+		return session;
 	}
 
-
-	private void createSessionFactory(String dialect, String driver, String url, String username, String password) {
-
-		Configuration cfg = new Configuration();
-
-		Properties properties = new Properties();
-		if ( dialect != null && !"".equals(dialect)) properties.put("hibernate.dialect", dialect);
-		properties.put("hibernate.connection.driver_class", driver);
-		properties.put("hibernate.connection.url", url);
-		properties.put("hibernate.connection.username", username);
-		properties.put("hibernate.connection.password", password);
-		properties.put("show_sql", "true");
-		properties.put("hbm2ddl.auto", "update");
-		cfg.setProperties(properties);
-
-		cfg.configure();
-		factory = cfg.buildSessionFactory();
-
-		session = factory.openSession();
-
-
-
+	public void closeSession() {
+		Session session = threadLocalSession.get();
+		if (session != null && session.isOpen()) {
+			session.close();
+		}
+		threadLocalSession.remove();
 	}
 
 	private void createSessionFactory(String key) throws Exception {
-
 		try {
-
 			dialect = DbProperties.dialect(key);
 			driver = DbProperties.driver(key);
 			url = DbProperties.url(key);
 			username = DbProperties.user(key);
 			password = DbProperties.password(key);
 
-			createSessionFactory(dialect, driver, url, username, password);
+			Configuration cfg = new Configuration();
 
-		} catch ( Exception e ) {
+			Properties properties = new Properties();
+			if (dialect != null && !"".equals(dialect)) properties.put("hibernate.dialect", dialect);
+			properties.put("hibernate.connection.driver_class", driver);
+			properties.put("hibernate.connection.url", url);
+			properties.put("hibernate.connection.username", username);
+			properties.put("hibernate.connection.password", password);
+			properties.put("show_sql", "true");
+			properties.put("hbm2ddl.auto", "update");
+			cfg.setProperties(properties);
+
+			cfg.configure();
+			factory = cfg.buildSessionFactory();
+		} catch (Exception e) {
 			throw e;
 		}
-
-
 	}
 
 	public SessionFactory factory() {
@@ -152,148 +139,76 @@ public class Persistence {
 	}
 
 	public synchronized void save(Object object) throws DbException {
-		try {
+		Transaction transaction = null;
+		try (Session session = getSession()) {
 			transaction = session.beginTransaction();
-
 			session.save(object);
 			transaction.commit();
-
-		} catch ( Exception e ) {
-			System.out.println("ERROR when saving object " + object);
-			transaction.rollback();
-			//e.printStackTrace();
-			throw new DbException();
-		}
-	}
-
-	public void save(Object[] objects) throws DbException {
-
-		try {
-			transaction = session.beginTransaction();
-			for ( Object object : objects ) session.save(object);
-			transaction.commit();
-
-		} catch ( Exception e ) {
-			System.out.println("ERROR when saving object " + objects);
-			transaction.rollback();
-			//e.printStackTrace();
-			throw new DbException();
+		} catch (Exception e) {
+			if (transaction != null) transaction.rollback();
+			throw new DbException("Error saving object", e);
 		}
 	}
 
 	public void update(Object object) {
-
-		try {
+		Transaction transaction = null;
+		try (Session session = getSession()) {
 			transaction = session.beginTransaction();
 			session.update(object);
 			transaction.commit();
-
-		} catch ( Exception e ) {
-
-			System.out.println("ERROR when update object " + object);
-			System.out.println("Doing TRANSACTION ROLLBACK");
-			transaction.rollback();
-			e.printStackTrace();
-			throw e;
+		} catch (Exception e) {
+			if (transaction != null) transaction.rollback();
+			throw new RuntimeException("Error updating object", e);
 		}
-
 	}
 
-
-
-	public void update(Object[] objects) {
-
-		try {
-			transaction = session.beginTransaction();
-			Arrays.asList(objects).stream().forEach(object -> session.update(object));
-			transaction.commit();
-
-		} catch ( Exception e ) {
-			System.out.println("ERROR when update object " + objects);
-			System.out.println("Doing TRANSACTION ROLLBACK");
-			transaction.rollback();
-			e.printStackTrace();
-			throw e;
-		}
-	}	
-
 	public void delete(Object object) throws Exception {
-
-		try {
+		Transaction transaction = null;
+		try (Session session = getSession()) {
 			transaction = session.beginTransaction();
 			session.delete(object);
 			transaction.commit();
-
-		} catch ( Exception e ) {
-			System.out.println("ERROR when delete object " + object);
-			System.out.println("Doing TRANSACTION ROLLBACK");
-			transaction.rollback();
-			e.printStackTrace();
-			throw e;
-		}
-	}
-
-	public void delete(Object[] objects) throws Exception{
-
-		try {
-			transaction = session.beginTransaction();
-			Arrays.asList(objects).stream().forEach(object -> session.delete(object));
-			transaction.commit();
-
-		} catch ( Exception e ) {
-			System.out.println("ERROR when delete object " + objects);
-			System.out.println("Doing TRANSACTION ROLLBACK");
-			transaction.rollback();
-			e.printStackTrace();
-			throw e;
+		} catch (Exception e) {
+			if (transaction != null) transaction.rollback();
+			throw new Exception("Error deleting object", e);
 		}
 	}
 
 	public <T> T find(Class<T> klass, Object id) {
-
-		T t = session.find(klass, id);
-		return t;
+		try (Session session = getSession()) {
+			return session.find(klass, id);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> List<T> list(String hql) {
+		try (Session session = getSession()) {
+			List<T> list = new ArrayList<>();
+			Query q = session.createQuery(hql);
+			list = q.getResultList();
 
-		List<T> list = new ArrayList<>();
-		Query q = session.createQuery(hql);
-		list = q.getResultList();
-
-		return list;
+			return list;
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> T get(String hql) {
-
-		Query q = session.createQuery(hql);
-		List<T> list = q.getResultList();
-		return list.size() > 0 ? list.get(0) : null;
+		try (Session session = getSession()) {
+			Query q = session.createQuery(hql);
+			List<T> list = q.getResultList();
+			return list.size() > 0 ? list.get(0) : null;
+		}
 	}
 
-	/*
-	@SuppressWarnings("unchecked")
-	public <T> List<T> list(String hql, Map<String, Object> h) {
-
-		Query q = session.createQuery(hql);
-		for ( Enumeration<String> e = h.keys(); e.hasMoreElements(); ) {
-			String key = (String) e.nextElement();
-			Object value = h.get(key);
-			q.setParameter(key, value);
-		}
-		List<T> list = q.getResultList();
-		return list;
-	}
-	 */
 
 	public <T> List<T> list(String hql, Map<String, Object> h) {
-		Query q = session.createQuery(hql);
-		for (Map.Entry<String, Object> entry : h.entrySet()) {
-			q.setParameter(entry.getKey(), entry.getValue());
+		try (Session session = getSession()) {
+			Query q = session.createQuery(hql);
+			for (Map.Entry<String, Object> entry : h.entrySet()) {
+				q.setParameter(entry.getKey(), entry.getValue());
+			}
+			return q.getResultList();
 		}
-		return q.getResultList();
 	}
 
 
@@ -321,13 +236,30 @@ public class Persistence {
 
 	@SuppressWarnings("unchecked")
 	public <T> List<T> list(String hql, int start, int max) {
+		try (Session session = getSession()) {
+			Query q = session.createQuery(hql);
+			q.setFirstResult(start);
+			q.setMaxResults(max);
+			List<T> list = q.getResultList();
 
-		Query q = session.createQuery(hql);
-		q.setFirstResult(start);
-		q.setMaxResults(max);
-		List<T> list = q.getResultList();
+			return list;
+		}
+	}
 
-		return list;
+	//****
+	@Transactional
+	public <T> List<T> listByPage(int pageNumber, int max, String hql, Map<String, Object> h) {
+		try (Session session = getSession()) {
+			int start = (pageNumber - 1) * max;
+			Query q = session.createQuery(hql);
+			q.setFirstResult(start);
+			q.setMaxResults(max);		
+			for (Map.Entry<String, Object> entry : h.entrySet()) {
+				q.setParameter(entry.getKey(), entry.getValue());
+			}
+			List<T> list = q.getResultList();
+			return list;
+		}
 	}
 
 
@@ -345,24 +277,27 @@ public class Persistence {
 	 */
 
 	public long getTotalRecords(String hql) {
-		// Modify the HQL to count query
-		String countHql = "SELECT COUNT(*) " + hql.substring(hql.toLowerCase().indexOf("from"));
+		try (Session session = getSession()) {
+			// Modify the HQL to count query
+			String countHql = "SELECT COUNT(*) " + hql.substring(hql.toLowerCase().indexOf("from"));
 
-		Query countQuery = session.createQuery(countHql, Long.class);
-		return (Long) countQuery.getSingleResult(); // Return the total count
+			Query countQuery = session.createQuery(countHql, Long.class);
+			return (Long) countQuery.getSingleResult(); // Return the total count
+		}
 	}
 
 	public long getTotalRecords(String hql, Map<String, Object> h) {
-		// Modify the HQL to count query
-		String countHql = "SELECT COUNT(*) " + hql.substring(hql.toLowerCase().indexOf("from"));
+		try (Session session = getSession()) {
+			// Modify the HQL to count query
+			String countHql = "SELECT COUNT(*) " + hql.substring(hql.toLowerCase().indexOf("from"));
 
-		Query countQuery = session.createQuery(countHql, Long.class);
+			Query countQuery = session.createQuery(countHql, Long.class);
 
-		for (Map.Entry<String, Object> entry : h.entrySet()) {
-			countQuery.setParameter(entry.getKey(), entry.getValue());
+			for (Map.Entry<String, Object> entry : h.entrySet()) {
+				countQuery.setParameter(entry.getKey(), entry.getValue());
+			}
+			return (Long) countQuery.getSingleResult(); // Return the total count
 		}
-
-		return (Long) countQuery.getSingleResult(); // Return the total count
 	}
 
 	public long getTotalRecords(String hql, Object... params ) {
@@ -409,31 +344,18 @@ public class Persistence {
 	}
 
 
-	/*
-	 *  remove this method... tersilap buat
-	 */
-	public <T> T get(String hql, int start, int max) {
-
-		//session = factory.openSession();
-
-		Query q = session.createQuery(hql);
-		q.setFirstResult(start);
-		q.setMaxResults(max);
-		List<T> list = q.getResultList();
-		return list.size() > 0 ? list.get(0) : null;
-	}
-
 	public <T> T get(String hql, int chunkSize) {
 		return get(hql, 0, chunkSize);
 	}
 
 	public int execute(String q) throws ConstraintViolationException {
-
-		transaction = session.beginTransaction();
-		Query query = session.createQuery(q);
-		int n = query.executeUpdate();
-		transaction.commit();
-		return n;
+		try (Session session = getSession()) {
+			transaction = session.beginTransaction();
+			Query query = session.createQuery(q);
+			int n = query.executeUpdate();
+			transaction.commit();
+			return n;
+		}
 	}
 
 	public Persistence ifAdd(boolean b) {
@@ -450,7 +372,9 @@ public class Persistence {
 
 
 	public void beginTransaction() {
-		transaction = session.beginTransaction();
+		try (Session session = getSession()) {
+			transaction = session.beginTransaction();
+		}
 	}
 
 	public void commitTransaction() {
@@ -462,27 +386,39 @@ public class Persistence {
 	}
 
 	public void saveOnCommit(Object object) throws Exception {
-		session.save(object);
+		try (Session session = getSession()) {
+			session.save(object);
+		}
 	}
 
 	public void saveOnCommit(Object[] objects) throws Exception {
-		for ( Object object : objects ) session.save(object);
+		try (Session session = getSession()) {
+			for ( Object object : objects ) session.save(object);
+		}
 	}
 
 	public void updateOnCommit(Object object) throws Exception {
-		session.update(object);
+		try (Session session = getSession()) {
+			session.update(object);
+		}
 	}
 
 	public void updateOnCommit(Object[] objects) throws Exception {
-		Arrays.asList(objects).stream().forEach(object -> session.update(object));
+		try (Session session = getSession()) {
+			Arrays.asList(objects).stream().forEach(object -> session.update(object));
+		}
 	}
 
 	public void deleteOnCommit(Object object) throws Exception {
-		session.delete(object);
+		try (Session session = getSession()) {
+			session.delete(object);
+		}
 	}
 
 	public void deleteOnCommit(Object[] objects) throws Exception {
-		Arrays.asList(objects).stream().forEach(object -> session.delete(object));
+		try (Session session = getSession()) {
+			Arrays.asList(objects).stream().forEach(object -> session.delete(object));
+		}
 	}
 
 }

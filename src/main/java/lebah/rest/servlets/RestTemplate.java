@@ -24,6 +24,10 @@ import org.json.JSONObject;
 @WebServlet(urlPatterns = "/*")
 public class RestTemplate extends HttpServlet {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	protected String[] params = null;
 	
 	public static String getAuthorizationHeader(HttpServletRequest req) {
@@ -84,83 +88,75 @@ public class RestTemplate extends HttpServlet {
 
 		PrintWriter out = res.getWriter();
 		String pathInfo = req.getPathInfo();
-				
-		if ( pathInfo != null && !"".equals(pathInfo) ) {
-						
-			pathInfo = pathInfo.substring(pathInfo.indexOf("/") + 1);
-			
-			if ( pathInfo.indexOf("/") > 1 ) {
-				String paramPath = pathInfo.substring(pathInfo.indexOf("/") + 1);
-				
-				pathInfo = pathInfo.substring(0, pathInfo.indexOf("/"));
-				
-				params = paramPath.split("/");
-				
-			}
-			
-			String module = controllerPath + "/" + pathInfo;
-
-			module = module.replace("/", ".");
-			String cname = module.substring(module.lastIndexOf(".") + 1);
-			
-			if ( !"".equals(cname)) {
-				
-				cname = cname.substring(0,1).toUpperCase() + cname.substring(1);
-				module = module.substring(0, module.lastIndexOf(".")) + "." + cname;
-				
-				try {
-					Object object = Class.forName(module).newInstance();	
-					if ( object instanceof RestServlet ) {
-						RestServlet restServlet = (RestServlet) object;
-						
-						/*
-						 * Implement HEADER AUTHORIZATION here
-						 */
-						boolean isAuthorized = true;
-						if ( restServlet.needAuthorization() ) {
-							String authorizationHeader = getAuthorizationHeader(req);
-							//do something with authorization
-							isAuthorized = AuthorizationHandler.isAuthorized(authorizationHeader);
-							//if not authorized do servlet redirection
-							
-						}
-	
-						if ( isAuthorized ) {
-							restServlet.doService(req, res, action, params);
-						} else {
-							showNotAuthorizedMessage(out);
-						}
-	
-					}
-				} catch ( ClassNotFoundException cnfex ) {
-					res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-					cnfex.printStackTrace();
-					out.print("Module Not Found Error: " + module);
-				} catch ( InstantiationException iex ) {
-					res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-					iex.printStackTrace();
-					out.print("Module Instantiation Error: " + module);
-				} catch ( IllegalAccessException illex ) {
-					res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-					illex.printStackTrace();
-					out.print("Illegal Access Error: " + module);
-				} catch ( Exception ex ) {
-					res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-					ex.printStackTrace();
-					//out.print("Module Error: " + module);
-				}	
-			}
-			else {
 		
-				showDefaultMessage(out);
-				
-			}
-		}
-		else {
-			
+		//pathInfo not available, so get out
+		if ( pathInfo == null || "".equals(pathInfo)) {
+			System.out.println("pathInfo Not Available.");
 			showDefaultMessage(out);
-			
+			return;
 		}
+				
+		pathInfo = pathInfo.substring(pathInfo.indexOf("/") + 1);
+		if ( pathInfo.indexOf("/") > 1 ) {
+			String paramPath = pathInfo.substring(pathInfo.indexOf("/") + 1);
+			pathInfo = pathInfo.substring(0, pathInfo.indexOf("/"));
+			params = paramPath.split("/");
+		}
+		String module = controllerPath + "/" + pathInfo;
+		module = module.replace("/", ".");
+		String cname = module.substring(module.lastIndexOf(".") + 1);
+		
+		//Class Name not available, so get out
+		if ( "".equals(cname)) {
+			System.out.println("Class Name not given.");
+			showDefaultMessage(out);
+			return;
+		}
+					
+		cname = cname.substring(0,1).toUpperCase() + cname.substring(1);
+		module = module.substring(0, module.lastIndexOf(".")) + "." + cname;
+		
+		try {
+			
+			Object object = Class.forName(module)
+                     .getDeclaredConstructor()
+                     .newInstance();
+			
+			if ( object instanceof RestServlet ) {
+				RestServlet restServlet = (RestServlet) object;
+				/*
+				 * Implement HEADER AUTHORIZATION here
+				 */
+				boolean isAuthorized = true;
+				if ( restServlet.needAuthorization() ) {
+					isAuthorized = AuthorizationHandler.isAuthorized(getAuthorizationHeader(req));
+					//if not authorized do servlet redirection
+				}
+				if ( isAuthorized )
+					restServlet.doService(req, res, action, params);
+				else
+					showNotAuthorizedMessage(out);
+			}
+		} catch ( ClassNotFoundException cnfex ) {
+			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			cnfex.printStackTrace();
+			out.print("Module Not Found Error: " + module);
+		} catch ( InstantiationException iex ) {
+			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			iex.printStackTrace();
+			out.print("Module Instantiation Error: " + module);
+		} catch ( IllegalAccessException illex ) {
+			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			illex.printStackTrace();
+			out.print("Illegal Access Error: " + module);
+		} catch ( Exception ex ) {
+			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			ex.printStackTrace();
+			//out.print("Module Error: " + module);
+		}	
+		
+		
+		
 
 	}
 	

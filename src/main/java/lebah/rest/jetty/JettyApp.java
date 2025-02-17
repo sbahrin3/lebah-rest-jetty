@@ -27,12 +27,6 @@ public class JettyApp {
         context.setContextPath("/");
         context.setAttribute("controllerPath", controllerPath);
         
-        /*
-        FilterHolder corsFilter = new FilterHolder(new MyCorsFilter());
-        context.addFilter(corsFilter, "/*", EnumSet.of(DispatcherType.REQUEST));
-        server.setHandler(context);
-        */
-        
         context.addServlet(new ServletHolder(new RestTemplate()), "/*");
         server.setHandler(context);
         
