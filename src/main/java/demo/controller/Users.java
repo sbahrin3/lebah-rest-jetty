@@ -3,103 +3,92 @@ package demo.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import demo.data.LoginRequest;
-import demo.data.TestingRequest;
-import demo.data.UserDataRequest;
-import demo.data.UserDataResponse;
+import demo.data.PageAttr;
+import demo.data.UserReq;
+import demo.data.UserRes;
 import demo.entity.User;
-import demo.services.UserService;
+import demo.services.ServiceUtil;
+import lebah.db.entity.Persistence;
 import lebah.rest.api.RestRequest;
-import lebah.rest.api.exception.ApiResponseException;
 import lebah.rest.api.exception.DataNotFoundException;
 import lebah.rest.servlets.Delete;
 import lebah.rest.servlets.Get;
 import lebah.rest.servlets.Post;
 import lebah.rest.servlets.Put;
 
-
-
-public class Users extends RestRequest {
+public class Users  extends RestRequest  {
 	
-	
-	
-	@Post("/")
-	public void registerUser(UserDataRequest udr) throws Exception {
-		User user = UserService.registerUser(udr);
-		sendAsResponse(new UserDataResponse(user));
-	}
 	
 	@Get("/")
 	public void listUsers() throws Exception {
-		List<User> users = UserService.listUsers();
+		PageAttr page = new PageAttr();
+		String queryString = getQueryString();
+		List<User> users = ServiceUtil.listByQueryParams(User.class, queryString, page);
+		
+		response.put("list", users.stream().map(UserRes::new).collect(Collectors.toList()));
 		response.put("count", users.size());
-		response.put("list", users.stream().map(u -> new UserDataResponse(u)).collect(Collectors.toList()));
+		response.put("total", page.getTotal());
+		response.put("pageSize", page.getPageSize());
+		response.put("pageNumber", page.getPageNumber());
+		response.put("nextPageNumber", page.getNextPageNumber());
+		response.put("prevPageNumber", page.getPrevPageNumber());
+		response.put("totalPages", page.getTotalPages());
+		response.put("startCount", page.getStartCount());
+		
 	}
-
-	@Post("/login")
-	public void login(LoginRequest loginRequest) throws Exception {
-		User user = UserService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
-		if ( user != null ) {
-			sendAsResponse(new UserDataResponse(user));
-		} else 
-			throw new DataNotFoundException();
 	
+	@Post("/")
+	public void addUser(UserReq userReq) throws Exception {
+		
+		String fullName = userReq.getFullName();
+		String email = userReq.getEmail();
+		String identificationNumber = userReq.getIdentificationNumber();
+		
+		User user = new User();
+		user.setEmail(email);
+		user.setFullName(fullName);
+		user.setIdentificationNumber(identificationNumber);
+		
+		Persistence.db().save(user);
+		
+		sendAsResponse(new UserRes(user));
 	}
 	
 	@Get("/{userId}")
-	public void getUser() throws Exception {		
-		User user = UserService.findUser(getPathVariable("userId"));
-		if ( user != null ) sendAsResponse(new UserDataResponse(user));
-		else throw new DataNotFoundException();
+	public void getUser() throws Exception {
+		String userId = this.getPathVariable("userId");
+		User user = Persistence.db().find(User.class, userId);
+		if ( user == null ) throw new DataNotFoundException();
+		
+		sendAsResponse(new UserRes(user));
 	}
 	
-	@Put("/{userId}")
-	public void updateUser() throws Exception {
-		String userId = getPathVariable("userId");
-		response.put("message", "UPDATE user profile: " + userId);
+	@Put("{userId}")
+	public void updateUser(UserReq userReq) throws Exception {
+		String userId = this.getPathVariable("userId");
+		User user = Persistence.db().find(User.class, userId);
+		if ( user == null ) throw new DataNotFoundException();
 		
+		if ( userReq.getFullName() != null) user.setFullName(userReq.getFullName());
+		if ( userReq.getEmail() != null ) user.setEmail(userReq.getEmail());
+		if ( userReq.getIdentificationNumber() != null ) user.setIdentificationNumber(userReq.getIdentificationNumber());
+		
+		Persistence.db().update(user);
+		
+		sendAsResponse(new UserRes(user));
 		
 	}
 	
-	@Delete("/{userId}")
+	@Delete("{userId}")
 	public void deleteUser() throws Exception {
-		String userId = getPathVariable("userId");
-		response.put("message", "DELETE user profile: " + userId);
+		String userId = this.getPathVariable("userId");
+		User user = Persistence.db().find(User.class, userId);
+		if ( user == null ) throw new DataNotFoundException();
+		
+		Persistence.db().delete(user);
+		
+		response.put("message", "User has been deleted.");
 	}
 	
-	@Get("/email/{email}")
-	public void getUserByEmail() throws Exception {
-		User user = UserService.findUser(getPathVariable("email"));
-		if ( user != null ) sendAsResponse(new UserDataResponse(user));
-		else throw new DataNotFoundException();
-	}
-	
-	
-	@Post("/{userId}/spouse/{spouseId}/child/{childId}")
-	public void testMethod(TestingRequest testingRequest) throws Exception {
-		System.out.println("Testing Only");
-		String userId = getPathVariable("userId");
-		String spouseId = getPathVariable("spouseId");
-		String childId = getPathVariable("childId");
-		
-		String parameter1 = testingRequest.getParameter1();
-		String parameter2 = testingRequest.getParameter2();
-		System.out.println("parameter1 = " + parameter1);
-		System.out.println("parameter2 = " + parameter2);
-		
-		response.put("userId", userId);
-		response.put("spouseId", spouseId);
-		response.put("childId", childId);
-		response.put("testingRequest", testingRequest);
-	}
-	
-	@Get("/testError/{value}")
-	public void testApiResponseError() throws Exception {
-		
-		String value = getPathVariable("value");
-		if ( "0".equals(value)) throw  new ApiResponseException(513, "Incorrect given value.");
-		response.put("message", "value is " + value);
-		
-	}
 
 }
