@@ -21,8 +21,8 @@ import lebah.util.DateUtil;
 import lebah.util.QueryStringParser;
 
 public class ServiceUtil {
-	
-	
+
+
 	public static <T> List<T> listByQueryParams(Class<?> entityClass, String queryString, PageAttr page) throws Exception {
 
 		Method[] methods = entityClass.getMethods();
@@ -74,31 +74,31 @@ public class ServiceUtil {
 
 		int pageNo = Integer.parseInt(pageNumber);
 		int max = Integer.parseInt(pageSize);
-		
+
 		Persistence db = Persistence.db();
-		
+
 		String query = q;
 		List<?> records = new ArrayList<>();
 		Long totalRecords = 0L;
 		try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-						
+
 			CompletableFuture<List<?>> listFuture = CompletableFuture.supplyAsync(() -> {
 				return max > 0 ? db.listByPage(pageNo, max, query, params) : db.list(query, params);
-            }, executor);
+			}, executor);
 			CompletableFuture<Long> countFuture = CompletableFuture.supplyAsync(() -> {
 				return db.getTotalRecords(query, params);
-            }, executor);
-			
+			}, executor);
+
 			CompletableFuture<Void> allTasks = CompletableFuture.allOf(listFuture, countFuture);
-            allTasks.join();
-            
-            records = listFuture.join();
-            totalRecords = countFuture.join();
-            
-            page.setTotal(totalRecords);
-		    page.setCount(records.size());
+			allTasks.join();
+
+			records = listFuture.join();
+			totalRecords = countFuture.join();
+
+			page.setTotal(totalRecords);
+			page.setCount(records.size());
 		}
-		
+
 		page.setPageNumber(pageNo);
 		page.setPageSize(max);
 
