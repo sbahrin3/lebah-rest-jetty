@@ -1,5 +1,9 @@
 package demo.data;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import demo.entity.User;
 
 public class UserRes {
@@ -8,12 +12,14 @@ public class UserRes {
 	String email;
 	String fullName;
 	String identificationNumber;
+	List<RoleRes> roles = new ArrayList<>();
 	
 	public UserRes(User u) {
 		this.id = u.getId();
 		this.email = u.getEmail();
 		this.fullName = u.getFullName();
 		this.identificationNumber = u.getIdentificationNumber();
+		this.roles = u.getRoles().stream().map(RoleRes::new).toList();
 	}
 	
 	public String getId() {
@@ -39,6 +45,14 @@ public class UserRes {
 	}
 	public void setIdentificationNumber(String identificationNumber) {
 		this.identificationNumber = identificationNumber;
+	}
+
+	public List<RoleRes> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<RoleRes> roles) {
+		this.roles = roles;
 	}
 	
 	
