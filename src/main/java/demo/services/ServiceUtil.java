@@ -3,6 +3,7 @@ package demo.services;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -10,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import demo.data.PageAttr;
@@ -18,6 +21,7 @@ import lebah.util.DateUtil;
 import lebah.util.QueryStringParser;
 
 public class ServiceUtil {
+	
 	
 	public static <T> List<T> listByQueryParams(Class<?> entityClass, String queryString, PageAttr page) throws Exception {
 
@@ -73,25 +77,32 @@ public class ServiceUtil {
 		
 		Persistence db = Persistence.db();
 		
-		final String query = q;
-		CompletableFuture<List<?>> listFuture = CompletableFuture.supplyAsync(() -> {
-		    return max > 0 ? db.listByPage(pageNo, max, query, params) : db.list(query, params);
-		});
-		CompletableFuture<Long> countFuture = CompletableFuture.supplyAsync(() -> {
-		    return db.getTotalRecords(query, params);
-		});
-		CompletableFuture<List<?>> combinedFuture = listFuture.thenCombine(countFuture, (list, totalRecords) -> {
-		    page.setTotal(totalRecords);
-		    page.setCount(list.size());
-		    return list;
-		});
-		
-		List<?> list = combinedFuture.join();
+		String query = q;
+		List<?> records = new ArrayList<>();
+		Long totalRecords = 0L;
+		try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+						
+			CompletableFuture<List<?>> listFuture = CompletableFuture.supplyAsync(() -> {
+				return max > 0 ? db.listByPage(pageNo, max, query, params) : db.list(query, params);
+            }, executor);
+			CompletableFuture<Long> countFuture = CompletableFuture.supplyAsync(() -> {
+				return db.getTotalRecords(query, params);
+            }, executor);
+			
+			CompletableFuture<Void> allTasks = CompletableFuture.allOf(listFuture, countFuture);
+            allTasks.join();
+            
+            records = listFuture.join();
+            totalRecords = countFuture.join();
+            
+            page.setTotal(totalRecords);
+		    page.setCount(records.size());
+		}
 		
 		page.setPageNumber(pageNo);
 		page.setPageSize(max);
 
-		return (List<T>) list;
+		return (List<T>) records;
 	}
 
 }
