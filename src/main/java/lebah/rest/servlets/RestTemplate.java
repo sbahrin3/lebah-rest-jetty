@@ -23,23 +23,23 @@ import org.json.JSONObject;
 
 @WebServlet(urlPatterns = "/*")
 public class RestTemplate extends HttpServlet {
-	
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	protected String[] params = null;
-	
+
 	public static String getAuthorizationHeader(HttpServletRequest req) {
 		return req.getHeader("Authorization");
 	}
 
 	private void addCorsHeaders(HttpServletResponse response) {
-		
+
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH");
 		response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, hx-request, hx-current-url, hx-trigger, hx-target, hx-swap");
-		
+
 
 	}
 
@@ -63,39 +63,39 @@ public class RestTemplate extends HttpServlet {
 		doService(req, res, "post");
 
 	}
-	
+
 	public void doPut(HttpServletRequest req, HttpServletResponse res)  throws ServletException, IOException    {
 		doService(req, res, "put");
 	}
-	
+
 	public void doDelete(HttpServletRequest req, HttpServletResponse res)  throws ServletException, IOException    {
 		doService(req, res, "delete");
 	}
-	
+
 	public void doPatch(HttpServletRequest req, HttpServletResponse res)  throws ServletException, IOException    {
 		doService(req, res, "patch");
 	}
-	
+
 	public void doService(HttpServletRequest req, HttpServletResponse res, String action) throws ServletException, IOException  {
-		
+
 		addCorsHeaders(res);
-		
-        res.setContentType("application/json");
-        res.setCharacterEncoding("UTF-8");
-		
+
+		res.setContentType("application/json");
+		res.setCharacterEncoding("UTF-8");
+
 		String controllerPath = (String) req.getServletContext().getAttribute("controllerPath");
 		if ( controllerPath == null ) controllerPath = "";
 
 		PrintWriter out = res.getWriter();
 		String pathInfo = req.getPathInfo();
-		
+
 		//pathInfo not available, so get out
 		if ( pathInfo == null || "".equals(pathInfo)) {
 			System.out.println("pathInfo Not Available.");
 			showDefaultMessage(out);
 			return;
 		}
-				
+
 		pathInfo = pathInfo.substring(pathInfo.indexOf("/") + 1);
 		if ( pathInfo.indexOf("/") > 1 ) {
 			String paramPath = pathInfo.substring(pathInfo.indexOf("/") + 1);
@@ -105,23 +105,23 @@ public class RestTemplate extends HttpServlet {
 		String module = controllerPath + "/" + pathInfo;
 		module = module.replace("/", ".");
 		String cname = module.substring(module.lastIndexOf(".") + 1);
-		
+
 		//Class Name not available, so get out
 		if ( "".equals(cname)) {
 			System.out.println("Class Name not given.");
 			showDefaultMessage(out);
 			return;
 		}
-					
+
 		cname = cname.substring(0,1).toUpperCase() + cname.substring(1);
 		module = module.substring(0, module.lastIndexOf(".")) + "." + cname;
-		
+
 		try {
-			
+
 			Object object = Class.forName(module)
-                     .getDeclaredConstructor()
-                     .newInstance();
-			
+					.getDeclaredConstructor()
+					.newInstance();
+
 			if ( object instanceof RestServlet ) {
 				RestServlet restServlet = (RestServlet) object;
 				/*
@@ -154,12 +154,12 @@ public class RestTemplate extends HttpServlet {
 			ex.printStackTrace();
 			//out.print("Module Error: " + module);
 		}	
-		
-		
-		
+
+
+
 
 	}
-	
+
 	void showDefaultMessage(PrintWriter out) {
 		JSONObject obj = new JSONObject();
 		try {
@@ -169,7 +169,7 @@ public class RestTemplate extends HttpServlet {
 			e.printStackTrace();
 		}
 	}
-	
+
 	void showNotAuthorizedMessage(PrintWriter out) {
 		JSONObject obj = new JSONObject();
 		try {

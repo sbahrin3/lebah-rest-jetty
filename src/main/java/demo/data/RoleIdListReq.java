@@ -3,7 +3,7 @@ package demo.data;
 import java.util.List;
 
 public class RoleIdListReq {
-	
+
 	List<String> roles;
 
 	public List<String> getRoles() {
@@ -14,6 +14,6 @@ public class RoleIdListReq {
 		this.roles = roles;
 	}
 
-	
-	
+
+
 }

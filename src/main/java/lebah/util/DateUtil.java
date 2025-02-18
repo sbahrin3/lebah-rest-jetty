@@ -5,7 +5,7 @@ import java.util.Date;
 
 
 public class DateUtil {
-	
+
 	public static Date toDate(String datef) {
 		Date date = null;
 		try {
@@ -16,7 +16,7 @@ public class DateUtil {
 		}
 		return date;
 	}
-	
+
 	public static String toStr(Date date) {
 		String datef = "";
 		try {

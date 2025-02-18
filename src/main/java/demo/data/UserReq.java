@@ -1,11 +1,11 @@
 package demo.data;
 
 public class UserReq {
-	
+
 	String email;
 	String fullName;
 	String identificationNumber;
-	
+
 	public String getEmail() {
 		return email;
 	}
@@ -24,8 +24,8 @@ public class UserReq {
 	public void setIdentificationNumber(String identificationNumber) {
 		this.identificationNumber = identificationNumber;
 	}
-	
-	
-	
+
+
+
 
 }

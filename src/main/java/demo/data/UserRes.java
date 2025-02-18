@@ -7,13 +7,13 @@ import java.util.stream.Collectors;
 import demo.entity.User;
 
 public class UserRes {
-	
+
 	String id;
 	String email;
 	String fullName;
 	String identificationNumber;
 	List<RoleRes> roles = new ArrayList<>();
-	
+
 	public UserRes(User u) {
 		this.id = u.getId();
 		this.email = u.getEmail();
@@ -21,7 +21,7 @@ public class UserRes {
 		this.identificationNumber = u.getIdentificationNumber();
 		this.roles = u.getRoles().stream().map(RoleRes::new).toList();
 	}
-	
+
 	public String getId() {
 		return id;
 	}
@@ -54,7 +54,7 @@ public class UserRes {
 	public void setRoles(List<RoleRes> roles) {
 		this.roles = roles;
 	}
-	
-	
+
+
 
 }

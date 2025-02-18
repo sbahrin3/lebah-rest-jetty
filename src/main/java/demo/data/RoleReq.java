@@ -1,7 +1,7 @@
 package demo.data;
 
 public class RoleReq {
-	
+
 	String name;
 
 	public String getName() {
@@ -11,7 +11,7 @@ public class RoleReq {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	
+
+
 
 }

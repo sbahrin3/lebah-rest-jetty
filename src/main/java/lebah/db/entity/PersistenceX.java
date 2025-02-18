@@ -17,7 +17,7 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.exception.ConstraintViolationException;
 
 public class PersistenceX {
-	
+
 	private static Map<String, PersistenceX> persistenceMap = new HashMap<>();
 
 	private static SessionFactory factory = null;
@@ -88,7 +88,7 @@ public class PersistenceX {
 
 		session = factory.openSession();
 	}
-	*/
+	 */
 
 	private void createSessionFactory(String dialect, String driver, String url, String username, String password) {
 
@@ -275,7 +275,7 @@ public class PersistenceX {
 		}
 		return q.getResultList();
 	}
-	
+
 
 	/*
 	 *  Example: List<Entity> entities = db.list(hql, "value1", "value2", 4);
@@ -309,11 +309,11 @@ public class PersistenceX {
 
 		return list;
 	}
-	
+
 	//****
 	public <T> List<T> listByPage(int pageNumber, int max, String hql, Map<String, Object> h) {
 		int start = (pageNumber - 1) * max;
-		
+
 		Query q = session.createQuery(hql);
 		q.setFirstResult(start);
 		q.setMaxResults(max);		
@@ -416,7 +416,7 @@ public class PersistenceX {
 		List<T> list = q.getResultList();
 		return list.size() > 0 ? list.get(0) : null;
 	}
-	*/
+	 */
 
 	public <T> T get(String hql, int chunkSize) {
 		return get(hql, 0, chunkSize);

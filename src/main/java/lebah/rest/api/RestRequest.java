@@ -76,7 +76,7 @@ public abstract class RestRequest extends JSONData {
 
 		}
 	}
-	
+
 	public Object doAction(HttpServletRequest req, HttpServletResponse res, String action) throws Exception {
 		if ( "post".equals(action)) return doPost();
 		else if ( "get".equals(action)) return doGet();

@@ -26,21 +26,21 @@ public class ResponseExceptionHandler {
 	public static int getStatus(Throwable cause) {
 		return EXCEPTION_STATUS_MAP.getOrDefault(cause.getClass(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 	}
-	
+
 	/**
 	 * The while will go until to the root cause
 	 */
 	public static Throwable getRootCause(Throwable throwable) {
-	    Throwable cause = throwable;
-	    while (cause.getCause() != null && cause.getCause() != cause) {
-	        cause = cause.getCause();
-	    }
-	    
-	    System.out.println("CAUSEDBY: " + cause);
-	    
-	    return cause;
+		Throwable cause = throwable;
+		while (cause.getCause() != null && cause.getCause() != cause) {
+			cause = cause.getCause();
+		}
+
+		System.out.println("CAUSEDBY: " + cause);
+
+		return cause;
 	}
-	
-	
+
+
 
 }

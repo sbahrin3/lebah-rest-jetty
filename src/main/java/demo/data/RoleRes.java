@@ -3,10 +3,10 @@ package demo.data;
 import demo.entity.Role;
 
 public class RoleRes {
-	
+
 	String id;
 	String name;
-	
+
 	public RoleRes(Role role) {
 		this.id = role.getId();
 		this.name = role.getName();

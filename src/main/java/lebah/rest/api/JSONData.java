@@ -21,5 +21,5 @@ public abstract class JSONData  extends RestBase {
 			e.printStackTrace(out);
 		}
 	}
-	
+
 }
