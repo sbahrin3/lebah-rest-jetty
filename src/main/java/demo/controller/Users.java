@@ -24,6 +24,12 @@ import lebah.rest.servlets.Put;
 public class Users  extends RestRequest  {
 
 
+	/*
+	 * Get list of users by page.  Can include query parameters.
+	 * 
+	 * Example: PUT http://localhost:8080/users?pageNumber=5&pageSize=10&orderBy=fullName
+	 * 
+	 */
 	@Get("/")
 	public void listUsers() throws Exception {
 		PageAttr page = new PageAttr();
@@ -42,6 +48,18 @@ public class Users  extends RestRequest  {
 
 	}
 
+	/*
+	 * Add a user.
+	 * 
+	 * Example: POST http://localhost:8080/users
+	 * 
+	 * JSON Body:
+	 * {
+     *       "fullName": "Abram Harvey",
+     *       "identificationNumber": "YSW21575989Z",
+     *       "email": "abram@yahoo.com"
+     *   }
+	 */
 	@Post("/")
 	public void addUser(UserReq userReq) throws Exception {
 
@@ -59,6 +77,12 @@ public class Users  extends RestRequest  {
 		sendAsResponse(new UserRes(user));
 	}
 
+	/*
+	 * Get a user.
+	 * 
+	 * Example: GET http://localhost:8080/users/13
+	 * 
+	 */
 	@Get("/{userId}")
 	public void getUser() throws Exception {
 		String userId = this.getPathVariable("userId");
@@ -68,6 +92,17 @@ public class Users  extends RestRequest  {
 		sendAsResponse(new UserRes(user));
 	}
 
+	/*
+	 * Update a user.
+	 * 
+	 * Example: PUT http://localhost:8080/users/13
+	 * 
+	 * JSON Body:
+	 * {
+     *       "fullName": "Abram Harvey",
+     *       "identificationNumber": "YSW21575989Z",
+     *   }
+	 */
 	@Put("{userId}")
 	public void updateUser(UserReq userReq) throws Exception {
 		String userId = this.getPathVariable("userId");
@@ -84,6 +119,12 @@ public class Users  extends RestRequest  {
 
 	}
 
+	/*
+	 * Delete a user.
+	 * 
+	 * Example: DELETE http://localhost:8080/users/13
+	 * 
+	 */
 	@Delete("{userId}")
 	public void deleteUser() throws Exception {
 		String userId = this.getPathVariable("userId");
@@ -96,18 +137,19 @@ public class Users  extends RestRequest  {
 	}
 
 	/*
-	 * Assign list of roles to a user.
+	 * Assign list of roles to a user by removing existing roles first.
+	 * 
 	 * Example: POST http://localhost:8080/users/13/roles
+	 * 
 	 * JSON Body:
 	 * {
 	 *    "roles": [
 	 *        "3",
 	 *        "5",
-	 *        "5"
+	 *        "8"
 	 *     ]
 	 * }
 	 */
-
 	@Post("/{userId}/roles")
 	public void assignRolesToUser(RoleIdListReq roleListReq) throws Exception {
 
@@ -124,6 +166,19 @@ public class Users  extends RestRequest  {
 		sendAsResponse(new UserRes(user));
 	}
 
+	/*
+	 * Assign list of roles to a user, without removing existing roles.
+	 * 
+	 * Example: PUT http://localhost:8080/users/13/roles
+	 * 
+	 * JSON Body:
+	 * {
+	 *    "roles": [
+	 *    	  "3",
+	 *        "5"
+	 *     ]
+	 * }
+	 */
 	@Put("/{userId}/roles")
 	public void updateRolesToUser(RoleIdListReq roleListReq) throws Exception {
 
@@ -149,6 +204,7 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Delete a role from user.
+	 * 
 	 * Example: DELETE http://localhost:8080/users/14/roles/2
 	 */
 	@Delete("/{userId}/roles/{roleId}")

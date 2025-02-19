@@ -90,7 +90,7 @@ public class RestTemplate extends HttpServlet {
 
 		PrintWriter out = res.getWriter();
 		String pathInfo = req.getPathInfo();
-
+		
 		//pathInfo not available, so get out
 		if ( pathInfo == null || "".equals(pathInfo)) {
 			System.out.println("pathInfo Not Available.");

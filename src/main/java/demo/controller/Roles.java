@@ -59,7 +59,9 @@ public class Roles extends RestRequest {
 
 	/*
 	 * Return list of Users by a given Role
+	 * 
 	 * Example: http://localhost:8080/roles/3/users
+	 * 
 	 * Where 3 is a role id.
 	 */
 	@Get("/{roleId}/users")
