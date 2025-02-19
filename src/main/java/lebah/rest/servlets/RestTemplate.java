@@ -97,16 +97,16 @@ public class RestTemplate extends HttpServlet {
 			showDefaultMessage(out);
 			return;
 		}
-
+		
 		pathInfo = pathInfo.substring(pathInfo.indexOf("/") + 1);
 		if ( pathInfo.indexOf("/") > 1 ) {
 			String paramPath = pathInfo.substring(pathInfo.indexOf("/") + 1);
 			pathInfo = pathInfo.substring(0, pathInfo.indexOf("/"));
 			params = paramPath.split("/");
 		}
-		
-		String controllerClass = JettyApp.controllersMap.get(pathInfo);
 
+		String controllerClass = JettyApp.controllersMap.get(pathInfo);
+		
 		try {
 
 			Object object = Class.forName(controllerClass)
@@ -128,25 +128,29 @@ public class RestTemplate extends HttpServlet {
 				else
 					showNotAuthorizedMessage(out);
 			}
-		} catch ( ClassNotFoundException cnfex ) {
+		} catch ( ClassNotFoundException e ) {
 			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			cnfex.printStackTrace();
-			out.print("Controller Class Not Found Error: " + controllerClass);
-		} catch ( InstantiationException iex ) {
+			e.printStackTrace();
+			showErrorMessage(out, "Class Not Found Exception has occured.");
+		} catch ( InstantiationException e ) {
 			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			iex.printStackTrace();
-			out.print("Controller Class Instantiation Error: " + controllerClass);
-		} catch ( IllegalAccessException illex ) {
+			e.printStackTrace();
+			showErrorMessage(out, "Instantiation Exception has occured.");
+		} catch ( IllegalAccessException e ) {
 			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			illex.printStackTrace();
-			out.print("Illegal Access Error: " + controllerClass);
-		} catch ( Exception ex ) {
+			e.printStackTrace();
+			showErrorMessage(out, "Illegal Access Exception has occured.");
+		} catch ( NullPointerException e ) {
+			System.out.println("NULL POINTER");
+			res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			e.printStackTrace();
+			//showBadRequestMessage(out);
+			showErrorMessage(out, "Bad Request.  Path is not defined.");
+		} catch ( Exception e ) {
 			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			ex.printStackTrace();
-			//out.print("Module Error: " + module);
+			e.printStackTrace();
+			showErrorMessage(out, "An error has occured.");
 		}	
-
-
 
 
 	}
@@ -165,6 +169,16 @@ public class RestTemplate extends HttpServlet {
 		JSONObject obj = new JSONObject();
 		try {
 			obj.put("message", "Authorization Needed.");
+			out.print(obj);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void showErrorMessage(PrintWriter out, String message) {
+		JSONObject obj = new JSONObject();
+		try {
+			obj.put("message", message);
 			out.print(obj);
 		} catch (JSONException e) {
 			e.printStackTrace();

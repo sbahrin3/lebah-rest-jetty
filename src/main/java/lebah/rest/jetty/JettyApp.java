@@ -64,7 +64,7 @@ public class JettyApp {
 						Class<?> clazz = Class.forName(className);
 						if (clazz.isAnnotationPresent(Path.class)) {
 							Path p = clazz.getAnnotation(Path.class);
-							String value = p.value() != null && !"".equals(p.value()) ? p.value().substring(1) : "";
+							String value = p.value() != null && !"".equals(p.value()) ? p.value().startsWith("/") ? p.value().substring(1) : p.value() : "";
 							annotatedClasses.put(value, clazz.getName());
 						}
 					}
