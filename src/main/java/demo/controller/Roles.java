@@ -13,9 +13,11 @@ import lebah.rest.api.RestRequest;
 import lebah.rest.api.exception.DataNotFoundException;
 import lebah.rest.servlets.Delete;
 import lebah.rest.servlets.Get;
+import lebah.rest.servlets.Path;
 import lebah.rest.servlets.Post;
 import lebah.rest.servlets.Put;
 
+@Path("/roles")
 public class Roles extends RestRequest {
 
 	@Get("/")
@@ -60,7 +62,7 @@ public class Roles extends RestRequest {
 	 * Example: http://localhost:8080/roles/3/users
 	 * Where 3 is a role id.
 	 */
-	@Get("{roleId}/users")
+	@Get("/{roleId}/users")
 	public void listUsersByRole() throws Exception {
 		String roleId = this.getPathVariable("roleId");
 		Role role = Persistence.db().find(Role.class, roleId);

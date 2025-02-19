@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import demo.data.PageAttr;
 import demo.data.RoleIdListReq;
-import demo.data.RoleRes;
 import demo.data.UserReq;
 import demo.data.UserRes;
 import demo.entity.Role;
@@ -17,9 +16,11 @@ import lebah.rest.api.RestRequest;
 import lebah.rest.api.exception.DataNotFoundException;
 import lebah.rest.servlets.Delete;
 import lebah.rest.servlets.Get;
+import lebah.rest.servlets.Path;
 import lebah.rest.servlets.Post;
 import lebah.rest.servlets.Put;
 
+@Path("/users")
 public class Users  extends RestRequest  {
 
 

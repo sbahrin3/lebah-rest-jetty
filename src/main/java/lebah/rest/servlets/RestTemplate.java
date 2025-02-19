@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import lebah.rest.jetty.JettyApp;
+
 /**
  * 
  * @author shamsulbahrin
@@ -102,23 +104,12 @@ public class RestTemplate extends HttpServlet {
 			pathInfo = pathInfo.substring(0, pathInfo.indexOf("/"));
 			params = paramPath.split("/");
 		}
-		String module = controllerPath + "/" + pathInfo;
-		module = module.replace("/", ".");
-		String cname = module.substring(module.lastIndexOf(".") + 1);
-
-		//Class Name not available, so get out
-		if ( "".equals(cname)) {
-			System.out.println("Class Name not given.");
-			showDefaultMessage(out);
-			return;
-		}
-
-		cname = cname.substring(0,1).toUpperCase() + cname.substring(1);
-		module = module.substring(0, module.lastIndexOf(".")) + "." + cname;
+		
+		String controllerClass = JettyApp.controllersMap.get(pathInfo);
 
 		try {
 
-			Object object = Class.forName(module)
+			Object object = Class.forName(controllerClass)
 					.getDeclaredConstructor()
 					.newInstance();
 
@@ -140,15 +131,15 @@ public class RestTemplate extends HttpServlet {
 		} catch ( ClassNotFoundException cnfex ) {
 			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			cnfex.printStackTrace();
-			out.print("Module Not Found Error: " + module);
+			out.print("Controller Class Not Found Error: " + controllerClass);
 		} catch ( InstantiationException iex ) {
 			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			iex.printStackTrace();
-			out.print("Module Instantiation Error: " + module);
+			out.print("Controller Class Instantiation Error: " + controllerClass);
 		} catch ( IllegalAccessException illex ) {
 			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			illex.printStackTrace();
-			out.print("Illegal Access Error: " + module);
+			out.print("Illegal Access Error: " + controllerClass);
 		} catch ( Exception ex ) {
 			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			ex.printStackTrace();

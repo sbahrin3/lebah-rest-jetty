@@ -196,14 +196,16 @@ public abstract class RestRequest extends JSONData {
 				return cmd.value();
 			}
 		}
-		return "";
+		return null;
 	}
 
 
 
 
 	public boolean invokeStaticMethod(String annotationPattern, String command, Method method) throws Exception {
-
+		
+		if ( annotationPattern == null ) return false;
+		
 		if ( annotationPattern.equals(command)) {
 
 			Class<?>[] parameterTypes = method.getParameterTypes();
@@ -224,6 +226,9 @@ public abstract class RestRequest extends JSONData {
 
 
 	public boolean invokeDynamicMethod(String annotationPattern, String command, Method method) throws Exception {
+		
+		if ( annotationPattern == null ) return false;
+		
 		Pattern annpattern = Pattern.compile("\\{(\\w+)\\}");
 		Matcher annmatcher = annpattern.matcher(annotationPattern);
 		List<String> parameterNames = new ArrayList<>();
