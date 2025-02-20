@@ -33,8 +33,8 @@ public void addUser()
 
 A method that returns a user:
 ```java
-@Get("/{userId}"
-public void getUser(UserData userData)
+@Get("/{userId}")
+public void getUser()
 ```
 
 A method that updates user data:
