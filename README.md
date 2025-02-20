@@ -8,7 +8,7 @@ I wanted to avoid the complexity of Spring Boot and the need to learn other new 
 
 # Examples
 
-Create a REST class by extending it to RestRequest, and annotate it with Path.
+Create a REST class by extending it to RestRequest, and annotate it with @Path.
 ```java
 @Path("/users")
 public class Users extends RestRequest
