@@ -116,7 +116,7 @@ GET http://localhost:8080/users/13/roles
 
 ### A method that deletes a role from a user:
 ```java
-@Delete("{userId}/roles/${roleId}"
+@Delete("{userId}/roles/${roleId}")
 public void deleteRoleFromUser()
 ```
 HTTP DELETE Request
