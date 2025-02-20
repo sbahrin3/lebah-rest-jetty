@@ -112,22 +112,27 @@ public class RestTemplate extends HttpServlet {
 			Object object = Class.forName(controllerClass)
 					.getDeclaredConstructor()
 					.newInstance();
-
-			if ( object instanceof RestServlet ) {
-				RestServlet restServlet = (RestServlet) object;
-				/*
-				 * Implement HEADER AUTHORIZATION here
-				 */
-				boolean isAuthorized = true;
-				if ( restServlet.needAuthorization() ) {
-					isAuthorized = AuthorizationHandler.isAuthorized(getAuthorizationHeader(req));
-					//if not authorized do servlet redirection
+			
+			switch ( object ) {
+				case RestServlet restServlet -> {
+					boolean isAuthorized = true;
+					if ( restServlet.needAuthorization() ) {
+						isAuthorized = AuthorizationHandler.isAuthorized(getAuthorizationHeader(req));
+					}
+					if ( isAuthorized )
+						restServlet.doService(req, res, action, params);
+					else
+						showNotAuthorizedMessage(out);
+					
 				}
-				if ( isAuthorized )
-					restServlet.doService(req, res, action, params);
-				else
-					showNotAuthorizedMessage(out);
+				case null -> {
+					System.out.println("Object is Null");
+				}
+				default -> {
+					System.out.println("Switch Default");
+				}
 			}
+			
 		} catch ( ClassNotFoundException e ) {
 			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			e.printStackTrace();
