@@ -1,6 +1,6 @@
 # lebah-rest-jetty
 
-This is my approach of RESTful framework.  This makes sense because I want something lightweight and straightforward without the heavy abstractions of Spring Boot. I want full control over the framework without dealing with excessive configurations or unnecessary features of Spring Boot.
+This is my approach to the RESTful framework.  This makes sense because I want something lightweight and straightforward without the heavy abstractions of Spring Boot. I want full control over the framework without dealing with excessive configurations or unnecessary features of Spring Boot.
 
 ## Why Not Spring Boot?
 
