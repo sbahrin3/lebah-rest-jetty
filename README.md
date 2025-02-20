@@ -49,5 +49,24 @@ A method that deletes a user:
 public void deleteUser()
 ```
 
+A method that assigns roles to a user:
+```java
+@Post("/{userId}/roles")
+public void assignRolesToUser(RolesData rolesData)
+```
+
+A method that returns the list of roles of a user:
+```java
+@Get("/{userId}/roles")
+public void listUserAssignedRoles()
+```
+
+A method that deletes a role from a user:
+```java
+@Delete("{userId}/roles/${roleId}"
+public void deleteRoleFromUser()
+```
+
+```
 
 
