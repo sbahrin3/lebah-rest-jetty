@@ -25,12 +25,11 @@ import org.hibernate.exception.ConstraintViolationException;
  */
 public class Persistence {
 
-	private static Map<String, Persistence> persistenceMap = new HashMap<>();
-
+	private static Persistence instance = null;
 	private static SessionFactory factory = null;
 	private Transaction transaction;
-	//private Session session;
 	private static ThreadLocal<Session> threadLocalSession = ThreadLocal.withInitial(() -> null);
+	//private static ThreadLocal<Session> threadLocalSession = ThreadLocal.withInitial(() -> HibernateUtil.getSessionFactory().openSession());
 
 	private String dialect = "";
 	private String driver = "";
@@ -47,43 +46,23 @@ public class Persistence {
 			e.printStackTrace();
 		}
 	}
-
-	private Persistence(String key) throws Exception {
-		createSessionFactory(key);
+	
+	private static Persistence getInstance() {
+		if ( instance == null ) {
+			instance = new Persistence();
+		}
+		return instance;
 	}
 
-
-	public synchronized static Persistence db() throws DbException {
+	
+	public static Persistence db() throws DbException {
 		try {
-			return db("default");
+			return getInstance();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new DbException();
 
 		}
-	}
-
-
-	public synchronized static Persistence db(HttpServletRequest request) throws Exception {
-		String key = (String) request.getSession().getAttribute("_ref_key");
-		if ( key == null || "null".equals(key) ) key = "";
-		if ( "".equals(key) || key.length() == 0 ) key = "default";
-		return db(key);
-	}
-
-	public synchronized static Persistence db(String key) throws Exception {
-
-		if ( persistenceMap.get(key) == null ) {
-			persistenceMap.put(key, new Persistence(key));
-		}
-		return persistenceMap.get(key);
-	}
-
-	private void createSessionFactory() {
-		Configuration cfg = new Configuration();
-		cfg.configure();
-		factory = cfg.buildSessionFactory();
-		//session = factory.openSession();
 	}
 
 	public Session getSession() {
@@ -103,13 +82,13 @@ public class Persistence {
 		threadLocalSession.remove();
 	}
 
-	private void createSessionFactory(String key) throws Exception {
+	private void createSessionFactory() throws Exception {
 		try {
-			dialect = DbProperties.dialect(key);
-			driver = DbProperties.driver(key);
-			url = DbProperties.url(key);
-			username = DbProperties.user(key);
-			password = DbProperties.password(key);
+			dialect = DbProperties.dialect();
+			driver = DbProperties.driver();
+			url = DbProperties.url();
+			username = DbProperties.user();
+			password = DbProperties.password();
 
 			Configuration cfg = new Configuration();
 
@@ -125,6 +104,7 @@ public class Persistence {
 
 			cfg.configure();
 			factory = cfg.buildSessionFactory();
+			System.out.println("session factory created!");
 		} catch (Exception e) {
 			throw e;
 		}

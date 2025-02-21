@@ -8,10 +8,6 @@ public class Transaction {
 		db = Persistence.db();
 	}
 
-	public Transaction(String key) throws Exception {
-		db = Persistence.db(key);
-	}
-
 	public Persistence db() {
 		return db;
 	}

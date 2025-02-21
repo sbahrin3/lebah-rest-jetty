@@ -16,50 +16,27 @@ public class DbProperties {
 	}
 
 	public static String valueOf(String key) throws Exception {
-		if ( key == null || "null".equals(key) ) key = "default";
 		return rb.getString(key);
 	}
 
-	public static String dialect(String key) throws Exception {
-		key = "dialect.".concat(key);
-		return valueOf(key);
+	public static String dialect() throws Exception {
+		return valueOf("dialect");
 	}
 
-	public static String driver(String key) throws Exception {
-		key = "driver.".concat(key);
-		return valueOf(key);
+	public static String driver() throws Exception {
+		return valueOf("driver");
 	}
 
-	public static String url(String key) throws Exception {
-		key = "url.".concat(key);
-		return valueOf(key);
+	public static String url() throws Exception {
+		return valueOf("url");
 	}
 
-	public static String user(String key) throws Exception {
-		key = "user.".concat(key);
-		return valueOf(key);
+	public static String user() throws Exception {
+		return valueOf("user");
 	}
 
-	public static String password(String key) throws Exception {
-		key = "password.".concat(key);
-		return valueOf(key);
-	}
-
-	public static void main(String[] args) {
-
-		try {
-			String url1 = DbProperties.valueOf("url.cucms");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			String url2 = DbProperties.valueOf("url.erican");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-
+	public static String password() throws Exception {
+		return valueOf("password");
 	}
 
 }
