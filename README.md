@@ -64,12 +64,11 @@ public void updateUser(UserData userData)
 ```
 HTTP PUT Request
 ```
-PUT http://localhost:8080/users
+PUT http://localhost:8080/users/13
 
 Content-Type: application/json
 { 
-    "fullName": "Jafar Darwis",
-    "email": "jafardarwis@yahoo.com",
+    "fullName": "Muhammad Jafar bin Darwis",
     "identificationNumber": "H91223345"
 }
 ```
