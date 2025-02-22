@@ -104,8 +104,10 @@ public class Persistence {
 
 			cfg.configure();
 			factory = cfg.buildSessionFactory();
-			System.out.println("session factory created!");
+			
+			System.out.println("Hibernate session factory created!");
 		} catch (Exception e) {
+			System.out.println("An error occured while creating Hibernate session factory!");
 			throw e;
 		}
 	}

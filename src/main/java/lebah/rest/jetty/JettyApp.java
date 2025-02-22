@@ -10,6 +10,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
+import lebah.db.entity.Persistence;
 import lebah.rest.servlets.Path;
 import lebah.rest.servlets.RestTemplate;
 
@@ -20,7 +21,7 @@ public class JettyApp {
 
 	public static void main(String[] args) throws Exception {
 
-		JettyApp.runServer(8080, "qard.controller");
+		JettyApp.runServer(8080, "demo.controller");
 	}
 
 
@@ -41,12 +42,19 @@ public class JettyApp {
 
 		context.addServlet(new ServletHolder(new RestTemplate()), "/*");
 		server.setHandler(context);
+		
+		//Initialize Database
+		System.out.println("Initializing Database.");
+		Persistence.db();
+		System.out.println("Database Initialized.");
 
 		// Start the server
 		server.start();
 		System.out.println("Server started at port " + port);
 		System.out.println("Controller Path is " + controllerPath);
 		server.join();
+		
+
 
 	}
 	

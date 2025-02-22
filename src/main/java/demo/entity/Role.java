@@ -7,8 +7,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import qard.entity.LegalCapacityResult;
-
 @Entity
 @Table(name="roles")
 public class Role {

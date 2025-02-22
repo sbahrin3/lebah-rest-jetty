@@ -17,12 +17,7 @@
 		
 		<mapping class="demo.entity.User" />
 		<mapping class="demo.entity.Role" />
-		
-		
-        <mapping class="qard.entity.Borrower"/>
-        <mapping class="qard.entity.LegalCapacity" />
-        <mapping class="qard.entity.LegalCapacityOption" />
-        <mapping class="qard.entity.LegalCapacityResult" />
+
         
         
     </session-factory>
