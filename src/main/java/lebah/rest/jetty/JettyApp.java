@@ -52,6 +52,7 @@ public class JettyApp {
 		System.out.println("Initializing Database.");
 		Persistence.db();
 		System.out.println("Database Initialized.");
+		System.out.println("REST Server is READY.");
 		
 		server.join();
 

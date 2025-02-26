@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import demo.data.RoleDTO;
-import demo.data.UserDTO;
 import demo.entity.Role;
 import demo.entity.User;
+import demo.services.ServiceUtil;
 import lebah.db.entity.Persistence;
 import lebah.rest.api.RestRequest;
 import lebah.rest.api.exception.DataNotFoundException;
@@ -22,10 +22,7 @@ public class Roles extends RestRequest {
 	@Get("/")
 	public void listRoles() throws Exception {
 		List<Role> roles = Persistence.db().list("select r from Role r order by r.name");
-		System.out.println("roles = " + roles.size());
-		response.put("list", roles.stream().map(
-				r -> new RoleDTO(r.getId(), r.getName())
-				).collect(Collectors.toList()));
+		response.put("list", roles.stream().map(ServiceUtil::toRoleDTO).toList());
 		
 	}
 
@@ -34,7 +31,7 @@ public class Roles extends RestRequest {
 		Role role = new Role();
 		role.setName(roleDTO.name());
 		Persistence.db().save(role);
-		sendAsResponse(new RoleDTO(role.getId(), role.getName()));
+		sendAsResponse(ServiceUtil.toRoleDTO(role));
 	}
 
 	@Put("/{roleId}")
@@ -45,7 +42,7 @@ public class Roles extends RestRequest {
 
 		role.setName(roleDTO.name());
 		Persistence.db().update(role);
-		sendAsResponse(new RoleDTO(role.getId(), role.getName()));
+		sendAsResponse(ServiceUtil.toRoleDTO(role));
 	}
 
 	@Delete("/{roleId")
@@ -75,11 +72,8 @@ public class Roles extends RestRequest {
 
 		List<User> users = Persistence.db().list("SELECT u FROM User u JOIN u.roles r WHERE r.id = :p1", roleId);
 		
-		response.put("role", new RoleDTO(role.getId(), role.getName()));
-		response.put("users", users.stream().map(
-				u -> new UserDTO(u.getId(), u.getFullName(), u.getIdentificationNumber(), u.getEmail(), u.getRoles().stream().map(
-				r -> new RoleDTO(r.getId(), r.getName())).collect(Collectors.toList()))
-				).collect(Collectors.toList()));
+		response.put("role", ServiceUtil.toRoleDTO(role));
+		response.put("users", users.stream().map(ServiceUtil::toUserDTO).toList());
 	}
 
 }

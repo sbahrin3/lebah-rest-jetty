@@ -22,16 +22,6 @@ import lebah.rest.servlets.Put;
 
 @Path("/users")
 public class Users  extends RestRequest  {
-	
-	
-	private void sendUserDTO(User user) {
-		sendAsResponse(
-				new UserDTO(user.getId(), user.getFullName(), user.getIdentificationNumber(), user.getEmail(), user.getRoles().stream()
-				.map(
-					r -> new RoleDTO(r.getId(), r.getName())).collect(Collectors.toList()))
-				);
-	}
-
 
 
 	/*
@@ -46,10 +36,8 @@ public class Users  extends RestRequest  {
 		String queryString = getQueryString();
 		List<User> users = ServiceUtil.listByQueryParams(User.class, queryString, page);
 
-		response.put("list", users.stream().map(
-				u -> new UserDTO(u.getId(), u.getFullName(), u.getIdentificationNumber(), u.getEmail(), u.getRoles().stream().map(
-				r -> new RoleDTO(r.getId(), r.getName())).collect(Collectors.toList()))
-				).collect(Collectors.toList()));
+		response.put("list", users.stream().map(ServiceUtil::toUserDTO).toList());
+		
 		response.put("count", users.size());
 		response.put("total", page.getTotal());
 		response.put("pageSize", page.getPageSize());
@@ -87,7 +75,7 @@ public class Users  extends RestRequest  {
 
 		Persistence.db().save(user);
 
-		sendUserDTO(user);
+		sendAsResponse(ServiceUtil.toUserDTO(user));
 	}
 
 	/*
@@ -102,7 +90,7 @@ public class Users  extends RestRequest  {
 		User user = Persistence.db().find(User.class, userId);
 		if ( user == null ) throw new DataNotFoundException();
 
-		sendUserDTO(user);
+		sendAsResponse(ServiceUtil.toUserDTO(user));
 	}
 
 	/*
@@ -128,7 +116,7 @@ public class Users  extends RestRequest  {
 
 		Persistence.db().update(user);
 
-		sendUserDTO(user);
+		sendAsResponse(ServiceUtil.toUserDTO(user));
 
 	}
 
@@ -176,7 +164,7 @@ public class Users  extends RestRequest  {
 		user.getRoles().addAll(roles);
 		db.update(user);
 
-		sendUserDTO(user);
+		sendAsResponse(ServiceUtil.toUserDTO(user));
 	}
 
 	/*
@@ -208,7 +196,7 @@ public class Users  extends RestRequest  {
 		if ( addroles.size() > 0 ) user.getRoles().addAll(addroles);
 		db.update(user);
 
-		sendUserDTO(user);
+		sendAsResponse(ServiceUtil.toUserDTO(user));
 	}
 
 	private Role getRole(Persistence db, String roleId) {
@@ -234,7 +222,7 @@ public class Users  extends RestRequest  {
 		user.getRoles().remove(role);
 		db.update(user);
 
-		sendUserDTO(user);
+		sendAsResponse(ServiceUtil.toUserDTO(user));
 	}
 
 	

@@ -16,6 +16,10 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import demo.data.PageAttr;
+import demo.data.RoleDTO;
+import demo.data.UserDTO;
+import demo.entity.Role;
+import demo.entity.User;
 import lebah.db.entity.Persistence;
 import lebah.util.DateUtil;
 import lebah.util.QueryStringParser;
@@ -103,6 +107,27 @@ public class ServiceUtil {
 		page.setPageSize(max);
 
 		return (List<T>) records;
+	}
+	
+	
+	public static UserDTO toUserDTOx(User user) {
+		return new UserDTO(
+				user.getId(), user.getFullName(), user.getIdentificationNumber(), user.getEmail(), user.getRoles().stream()
+				.map(
+				r -> new RoleDTO(r.getId(), r.getName())).collect(Collectors.toList())
+				);
+	}
+	
+	public static UserDTO toUserDTO(User user) {
+		return new UserDTO(
+				user.getId(), user.getFullName(), user.getIdentificationNumber(), user.getEmail(), user.getRoles().stream()
+				.map(
+				ServiceUtil::toRoleDTO).toList()
+				);
+	}
+	
+	public static RoleDTO toRoleDTO(Role role) {
+		return new RoleDTO(role.getId(), role.getName());
 	}
 
 }
