@@ -17,7 +17,6 @@
 		
 		<mapping class="demo.entity.User" />
 		<mapping class="demo.entity.Role" />
-
         
         
     </session-factory>

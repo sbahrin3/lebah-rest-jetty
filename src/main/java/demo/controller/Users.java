@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import demo.data.PageAttr;
-import demo.data.RoleIdListReq;
-import demo.data.UserReq;
-import demo.data.UserRes;
+import demo.data.RoleDTO;
+import demo.data.RoleIdListDTO;
+import demo.data.UserDTO;
 import demo.entity.Role;
 import demo.entity.User;
 import demo.services.ServiceUtil;
@@ -22,6 +22,16 @@ import lebah.rest.servlets.Put;
 
 @Path("/users")
 public class Users  extends RestRequest  {
+	
+	
+	private void sendUserDTO(User user) {
+		sendAsResponse(
+				new UserDTO(user.getId(), user.getFullName(), user.getIdentificationNumber(), user.getEmail(), user.getRoles().stream()
+				.map(
+					r -> new RoleDTO(r.getId(), r.getName())).collect(Collectors.toList()))
+				);
+	}
+
 
 
 	/*
@@ -36,7 +46,10 @@ public class Users  extends RestRequest  {
 		String queryString = getQueryString();
 		List<User> users = ServiceUtil.listByQueryParams(User.class, queryString, page);
 
-		response.put("list", users.stream().map(UserRes::new).collect(Collectors.toList()));
+		response.put("list", users.stream().map(
+				u -> new UserDTO(u.getId(), u.getFullName(), u.getIdentificationNumber(), u.getEmail(), u.getRoles().stream().map(
+				r -> new RoleDTO(r.getId(), r.getName())).collect(Collectors.toList()))
+				).collect(Collectors.toList()));
 		response.put("count", users.size());
 		response.put("total", page.getTotal());
 		response.put("pageSize", page.getPageSize());
@@ -61,11 +74,11 @@ public class Users  extends RestRequest  {
      *   }
 	 */
 	@Post("/")
-	public void addUser(UserReq userReq) throws Exception {
+	public void addUser(UserDTO userDTO) throws Exception {
 
-		String fullName = userReq.getFullName();
-		String email = userReq.getEmail();
-		String identificationNumber = userReq.getIdentificationNumber();
+		String fullName = userDTO.fullName();
+		String email = userDTO.email();
+		String identificationNumber = userDTO.identificationNumber();
 
 		User user = new User();
 		user.setEmail(email);
@@ -74,7 +87,7 @@ public class Users  extends RestRequest  {
 
 		Persistence.db().save(user);
 
-		sendAsResponse(new UserRes(user));
+		sendUserDTO(user);
 	}
 
 	/*
@@ -89,7 +102,7 @@ public class Users  extends RestRequest  {
 		User user = Persistence.db().find(User.class, userId);
 		if ( user == null ) throw new DataNotFoundException();
 
-		sendAsResponse(new UserRes(user));
+		sendUserDTO(user);
 	}
 
 	/*
@@ -104,18 +117,18 @@ public class Users  extends RestRequest  {
      *   }
 	 */
 	@Put("{userId}")
-	public void updateUser(UserReq userReq) throws Exception {
+	public void updateUser(UserDTO userDTO) throws Exception {
 		String userId = this.getPathVariable("userId");
 		User user = Persistence.db().find(User.class, userId);
 		if ( user == null ) throw new DataNotFoundException();
 
-		if ( userReq.getFullName() != null) user.setFullName(userReq.getFullName());
-		if ( userReq.getEmail() != null ) user.setEmail(userReq.getEmail());
-		if ( userReq.getIdentificationNumber() != null ) user.setIdentificationNumber(userReq.getIdentificationNumber());
+		if ( userDTO.fullName() != null) user.setFullName(userDTO.fullName());
+		if ( userDTO.email() != null ) user.setEmail(userDTO.email());
+		if ( userDTO.identificationNumber() != null ) user.setIdentificationNumber(userDTO.identificationNumber());
 
 		Persistence.db().update(user);
 
-		sendAsResponse(new UserRes(user));
+		sendUserDTO(user);
 
 	}
 
@@ -151,19 +164,19 @@ public class Users  extends RestRequest  {
 	 * }
 	 */
 	@Post("/{userId}/roles")
-	public void assignRolesToUser(RoleIdListReq roleListReq) throws Exception {
+	public void assignRolesToUser(RoleIdListDTO roleListReq) throws Exception {
 
 		Persistence db = Persistence.db();
 
 		User user = db.find(User.class, this.getPathVariable("userId"));
 		if ( user == null ) throw new DataNotFoundException();
 
-		List<Role> roles = roleListReq.getRoles().stream().map(id -> getRole(db, id)).collect(Collectors.toList());
+		List<Role> roles = roleListReq.roles().stream().map(id -> getRole(db, id)).collect(Collectors.toList());
 		user.getRoles().clear();
 		user.getRoles().addAll(roles);
 		db.update(user);
 
-		sendAsResponse(new UserRes(user));
+		sendUserDTO(user);
 	}
 
 	/*
@@ -180,14 +193,14 @@ public class Users  extends RestRequest  {
 	 * }
 	 */
 	@Put("/{userId}/roles")
-	public void updateRolesToUser(RoleIdListReq roleListReq) throws Exception {
+	public void updateRolesToUser(RoleIdListDTO roleListReq) throws Exception {
 
 		Persistence db = Persistence.db();
 
 		User user = db.find(User.class, this.getPathVariable("userId"));
 		if ( user == null ) throw new DataNotFoundException();
 
-		List<Role> roles = roleListReq.getRoles().stream().map(id -> getRole(db, id)).collect(Collectors.toList());
+		List<Role> roles = roleListReq.roles().stream().map(id -> getRole(db, id)).collect(Collectors.toList());
 		List<Role> addroles = new ArrayList<>();
 		roles.stream().forEach(r -> {
 			if ( !user.getRoles().contains(r) ) addroles.add(r);
@@ -195,7 +208,7 @@ public class Users  extends RestRequest  {
 		if ( addroles.size() > 0 ) user.getRoles().addAll(addroles);
 		db.update(user);
 
-		sendAsResponse(new UserRes(user));
+		sendUserDTO(user);
 	}
 
 	private Role getRole(Persistence db, String roleId) {
@@ -221,7 +234,8 @@ public class Users  extends RestRequest  {
 		user.getRoles().remove(role);
 		db.update(user);
 
-		sendAsResponse(new UserRes(user));
+		sendUserDTO(user);
 	}
 
+	
 }

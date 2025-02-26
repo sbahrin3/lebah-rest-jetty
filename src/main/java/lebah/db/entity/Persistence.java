@@ -104,10 +104,8 @@ public class Persistence {
 
 			cfg.configure();
 			factory = cfg.buildSessionFactory();
-			
-			System.out.println("Hibernate session factory created!");
+			System.out.println("Session factory created.\n");
 		} catch (Exception e) {
-			System.out.println("An error occured while creating Hibernate session factory!");
 			throw e;
 		}
 	}
@@ -245,7 +243,7 @@ public class Persistence {
 	}
 
 
-	public <T> List<T> listByPage(String hql, int pageNumber, int max) {
+	public <T> List<T> listDataByPage(String hql, int pageNumber, int max) {
 		int start = (pageNumber - 1) * max; // Calculate the start index
 		return list(hql, start, max);
 	}

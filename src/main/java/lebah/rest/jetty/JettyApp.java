@@ -42,19 +42,18 @@ public class JettyApp {
 
 		context.addServlet(new ServletHolder(new RestTemplate()), "/*");
 		server.setHandler(context);
-		
-		//Initialize Database
-		System.out.println("Initializing Database.");
-		Persistence.db();
-		System.out.println("Database Initialized.");
 
 		// Start the server
 		server.start();
 		System.out.println("Server started at port " + port);
 		System.out.println("Controller Path is " + controllerPath);
-		server.join();
 		
-
+		//Initialize Database
+		System.out.println("Initializing Database.");
+		Persistence.db();
+		System.out.println("Database Initialized.");
+		
+		server.join();
 
 	}
 	
