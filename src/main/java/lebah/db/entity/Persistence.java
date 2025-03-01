@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.persistence.Query;
-import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
 import org.hibernate.Session;
@@ -141,7 +140,19 @@ public class Persistence {
 			throw new RuntimeException("Error updating object", e);
 		}
 	}
-
+	
+	public void update(Object...objects) {
+		Transaction transaction = null;
+		try ( Session session = getSession()) {
+			transaction = session.beginTransaction();
+			Arrays.asList(objects).stream().forEach(object -> session.update(object));
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) transaction.rollback();
+			throw new RuntimeException("Error updating object", e);
+		}
+	}
+	
 	public void delete(Object object) throws Exception {
 		Transaction transaction = null;
 		try (Session session = getSession()) {
@@ -153,6 +164,10 @@ public class Persistence {
 			throw new Exception("Error deleting object", e);
 		}
 	}
+	
+	
+	
+	
 
 	public <T> T find(Class<T> klass, Object id) {
 		try (Session session = getSession()) {
@@ -352,13 +367,17 @@ public class Persistence {
 
 
 	public void beginTransaction() {
+		/*
 		try (Session session = getSession()) {
 			transaction = session.beginTransaction();
 		}
+		*/
+		getSession().beginTransaction();
 	}
 
 	public void commitTransaction() {
 		transaction.commit();
+		getSession().close();
 	}
 
 	public void rollbackTransaction() {
@@ -366,9 +385,13 @@ public class Persistence {
 	}
 
 	public void saveOnCommit(Object object) throws Exception {
+		/*
 		try (Session session = getSession()) {
 			session.save(object);
 		}
+		*/
+		
+		getSession().save(object);
 	}
 
 	public void saveOnCommit(Object[] objects) throws Exception {
