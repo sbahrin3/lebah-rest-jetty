@@ -2,10 +2,8 @@ package demo.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import demo.data.PageAttr;
-import demo.data.RoleDTO;
 import demo.data.RoleIdListDTO;
 import demo.data.UserDTO;
 import demo.entity.Role;
@@ -23,10 +21,8 @@ import lebah.rest.servlets.Put;
 @Path("/users")
 public class Users  extends RestRequest  {
 
-
 	/*
 	 * Get list of users by page.  Can include query parameters.
-	 * 
 	 * Example: PUT http://localhost:8080/users?pageNumber=5&pageSize=10&orderBy=fullName
 	 * 
 	 */
@@ -51,9 +47,7 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Add a user.
-	 * 
 	 * Example: POST http://localhost:8080/users
-	 * 
 	 * JSON Body:
 	 * {
      *       "fullName": "Abram Harvey",
@@ -80,9 +74,7 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Get a user.
-	 * 
 	 * Example: GET http://localhost:8080/users/13
-	 * 
 	 */
 	@Get("/{userId}")
 	public void getUser() throws Exception {
@@ -95,14 +87,12 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Update a user.
-	 * 
 	 * Example: PUT http://localhost:8080/users/13
-	 * 
 	 * JSON Body:
 	 * {
      *       "fullName": "Abram Harvey",
      *       "identificationNumber": "YSW21575989Z",
-     *   }
+     * }
 	 */
 	@Put("{userId}")
 	public void updateUser(UserDTO userDTO) throws Exception {
@@ -122,9 +112,7 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Delete a user.
-	 * 
 	 * Example: DELETE http://localhost:8080/users/13
-	 * 
 	 */
 	@Delete("{userId}")
 	public void deleteUser() throws Exception {
@@ -139,9 +127,7 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Assign list of roles to a user by removing existing roles first.
-	 * 
 	 * Example: POST http://localhost:8080/users/13/roles
-	 * 
 	 * JSON Body:
 	 * {
 	 *    "roles": [
@@ -159,7 +145,7 @@ public class Users  extends RestRequest  {
 		User user = db.find(User.class, this.getPathVariable("userId"));
 		if ( user == null ) throw new DataNotFoundException();
 
-		List<Role> roles = roleListReq.roles().stream().map(id -> getRole(db, id)).collect(Collectors.toList());
+		List<Role> roles = roleListReq.roles().stream().map(id -> getRole(db, id)).toList();
 		user.getRoles().clear();
 		user.getRoles().addAll(roles);
 		db.update(user);
@@ -169,9 +155,7 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Assign list of roles to a user, without removing existing roles.
-	 * 
 	 * Example: PUT http://localhost:8080/users/13/roles
-	 * 
 	 * JSON Body:
 	 * {
 	 *    "roles": [
@@ -188,7 +172,7 @@ public class Users  extends RestRequest  {
 		User user = db.find(User.class, this.getPathVariable("userId"));
 		if ( user == null ) throw new DataNotFoundException();
 
-		List<Role> roles = roleListReq.roles().stream().map(id -> getRole(db, id)).collect(Collectors.toList());
+		List<Role> roles = roleListReq.roles().stream().map(id -> getRole(db, id)).toList();
 		List<Role> addroles = new ArrayList<>();
 		roles.stream().forEach(r -> {
 			if ( !user.getRoles().contains(r) ) addroles.add(r);
@@ -205,7 +189,6 @@ public class Users  extends RestRequest  {
 
 	/*
 	 * Delete a role from user.
-	 * 
 	 * Example: DELETE http://localhost:8080/users/14/roles/2
 	 */
 	@Delete("/{userId}/roles/{roleId}")

@@ -1,0 +1,27 @@
+type Query {
+    hello: String
+    users(pageNumber: Int = 1, pageSize: Int = 10): PagedUsers
+    user(id: String!): User
+    roles: [Role]
+}
+
+type PagedUsers {
+    total: Int
+    pageNumber : Int
+    pageSize : Int
+    totalPages: Int
+    items: [User]
+}
+
+type User {
+    id: String
+    fullName: String
+    email: String
+    identificationNumber: String
+    roles: [Role] 
+}
+
+type Role {
+	id: String
+	name: String
+}

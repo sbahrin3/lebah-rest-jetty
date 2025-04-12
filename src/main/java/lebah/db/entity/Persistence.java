@@ -22,7 +22,7 @@ import org.hibernate.exception.ConstraintViolationException;
  * @author Shamsul Bahrin
  *
  */
-public class Persistence {
+public class Persistence implements AutoCloseable {
 
 	private static Persistence instance = null;
 	private static SessionFactory factory = null;
@@ -73,14 +73,6 @@ public class Persistence {
 		return session;
 	}
 
-	public void closeSession() {
-		Session session = threadLocalSession.get();
-		if (session != null && session.isOpen()) {
-			session.close();
-		}
-		threadLocalSession.remove();
-	}
-
 	private void createSessionFactory() throws Exception {
 		try {
 			dialect = DbProperties.dialect();
@@ -103,7 +95,7 @@ public class Persistence {
 
 			cfg.configure();
 			factory = cfg.buildSessionFactory();
-			System.out.println("Session factory created.\n");
+			System.out.println("Session factory created.");
 		} catch (Exception e) {
 			throw e;
 		}
@@ -114,12 +106,27 @@ public class Persistence {
 	}
 
 	public void close() {
+		Session session = getSession();
+		session.close();
+	}
+	
+	public void closeFactory() {
 		factory.close();
+	}
+	
+	public void closeSession() {
+		Session session = threadLocalSession.get();
+		if (session != null && session.isOpen()) {
+			session.close();
+		}
+		threadLocalSession.remove();
 	}
 
 	public synchronized void save(Object object) throws DbException {
 		Transaction transaction = null;
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+		try {
+			Session session = getSession();
 			transaction = session.beginTransaction();
 			session.save(object);
 			transaction.commit();
@@ -131,7 +138,9 @@ public class Persistence {
 
 	public void update(Object object) {
 		Transaction transaction = null;
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+		try {
+			Session session = getSession();
 			transaction = session.beginTransaction();
 			session.update(object);
 			transaction.commit();
@@ -143,7 +152,9 @@ public class Persistence {
 	
 	public void update(Object...objects) {
 		Transaction transaction = null;
-		try ( Session session = getSession()) {
+		//try ( Session session = getSession()) {
+		try {
+			Session session = getSession();
 			transaction = session.beginTransaction();
 			Arrays.asList(objects).stream().forEach(object -> session.update(object));
 			transaction.commit();
@@ -155,7 +166,9 @@ public class Persistence {
 	
 	public void delete(Object object) throws Exception {
 		Transaction transaction = null;
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+		try {
+			Session session = getSession();
 			transaction = session.beginTransaction();
 			session.delete(object);
 			transaction.commit();
@@ -170,40 +183,57 @@ public class Persistence {
 	
 
 	public <T> T find(Class<T> klass, Object id) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			return session.find(klass, id);
-		}
+		//}
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> List<T> list(String hql) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			List<T> list = new ArrayList<>();
 			Query q = session.createQuery(hql);
 			list = q.getResultList();
 
 			return list;
-		}
+		//}
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> T get(String hql) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			Query q = session.createQuery(hql);
 			List<T> list = q.getResultList();
 			return list.size() > 0 ? list.get(0) : null;
-		}
+		//}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T get(String hql, Map<String, Object> h) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
+			Query q = session.createQuery(hql);
+			for (Map.Entry<String, Object> entry : h.entrySet()) {
+				q.setParameter(entry.getKey(), entry.getValue());
+			}
+			List<T> list = q.getResultList();
+			return list.size() > 0 ? list.get(0) : null;
+		//}
 	}
 
 
 	public <T> List<T> list(String hql, Map<String, Object> h) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			Query q = session.createQuery(hql);
 			for (Map.Entry<String, Object> entry : h.entrySet()) {
 				q.setParameter(entry.getKey(), entry.getValue());
 			}
 			return q.getResultList();
-		}
+		//}
 	}
 
 
@@ -212,6 +242,13 @@ public class Persistence {
 	 */
 
 	public <T> List<T> list(String hql, Object... params ) {
+		
+		int paramIndex = 1;
+        while (hql.contains("?")) {
+            hql = hql.replaceFirst("\\?", ":p" + paramIndex);
+            paramIndex++;
+        }
+		
 		Map<String, Object> h = new HashMap<>();
 		for ( int i=1; i < params.length + 1; i++ ) {
 			h.put("p" + i, params[i-1]);
@@ -222,29 +259,29 @@ public class Persistence {
 	/*
 	 *  Example: Entity entity = db.get(hql, "value1", "value2", 4);
 	 */
-
 	public <T> T get(String hql, Object... params ) {
 		List<T> list = list(hql, params);
 		return list.size() > 0 ? list.get(0) : null;
 	}
 
-
 	@SuppressWarnings("unchecked")
 	public <T> List<T> list(String hql, int start, int max) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			Query q = session.createQuery(hql);
 			q.setFirstResult(start);
 			q.setMaxResults(max);
 			List<T> list = q.getResultList();
 
 			return list;
-		}
+		//}
 	}
 
 	//****
 	@Transactional
 	public <T> List<T> listByPage(int pageNumber, int max, String hql, Map<String, Object> h) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			int start = (pageNumber - 1) * max;
 			Query q = session.createQuery(hql);
 			q.setFirstResult(start);
@@ -254,7 +291,7 @@ public class Persistence {
 			}
 			List<T> list = q.getResultList();
 			return list;
-		}
+		//}
 	}
 
 
@@ -272,17 +309,19 @@ public class Persistence {
 	 */
 
 	public long getTotalRecords(String hql) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			// Modify the HQL to count query
 			String countHql = "SELECT COUNT(*) " + hql.substring(hql.toLowerCase().indexOf("from"));
 
 			Query countQuery = session.createQuery(countHql, Long.class);
 			return (Long) countQuery.getSingleResult(); // Return the total count
-		}
+		//}
 	}
 
 	public long getTotalRecords(String hql, Map<String, Object> h) {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			// Modify the HQL to count query
 			String countHql = "SELECT COUNT(*) " + hql.substring(hql.toLowerCase().indexOf("from"));
 
@@ -292,10 +331,17 @@ public class Persistence {
 				countQuery.setParameter(entry.getKey(), entry.getValue());
 			}
 			return (Long) countQuery.getSingleResult(); // Return the total count
-		}
+		//}
 	}
 
 	public long getTotalRecords(String hql, Object... params ) {
+		
+		int paramIndex = 1;
+        while (hql.contains("?")) {
+            hql = hql.replaceFirst("\\?", ":p" + paramIndex);
+            paramIndex++;
+        }
+        
 		Map<String, Object> h = new HashMap<>();
 		for ( int i=1; i < params.length + 1; i++ ) {
 			h.put("p" + i, params[i-1]);
@@ -315,6 +361,13 @@ public class Persistence {
 	 */
 
 	public <T> List<T> list(int start, int max, String hql, Object... params ) {
+		
+		int paramIndex = 1;
+        while (hql.contains("?")) {
+            hql = hql.replaceFirst("\\?", ":p" + paramIndex);
+            paramIndex++;
+        }
+        
 		Map<String, Object> h = new HashMap<>();
 		for ( int i=1; i < params.length + 1; i++ ) {
 			h.put("p" + i, params[i-1]);
@@ -344,13 +397,14 @@ public class Persistence {
 	}
 
 	public int execute(String q) throws ConstraintViolationException {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			transaction = session.beginTransaction();
 			Query query = session.createQuery(q);
 			int n = query.executeUpdate();
 			transaction.commit();
 			return n;
-		}
+		//}
 	}
 
 	public Persistence ifAdd(boolean b) {
@@ -395,33 +449,38 @@ public class Persistence {
 	}
 
 	public void saveOnCommit(Object[] objects) throws Exception {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			for ( Object object : objects ) session.save(object);
-		}
+		//}
 	}
 
 	public void updateOnCommit(Object object) throws Exception {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			session.update(object);
-		}
+		//}
 	}
 
 	public void updateOnCommit(Object[] objects) throws Exception {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+		Session session = getSession();
 			Arrays.asList(objects).stream().forEach(object -> session.update(object));
-		}
+		//}
 	}
 
 	public void deleteOnCommit(Object object) throws Exception {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			session.delete(object);
-		}
+		//}
 	}
 
 	public void deleteOnCommit(Object[] objects) throws Exception {
-		try (Session session = getSession()) {
+		//try (Session session = getSession()) {
+			Session session = getSession();
 			Arrays.asList(objects).stream().forEach(object -> session.delete(object));
-		}
+		//}
 	}
 
 }

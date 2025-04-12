@@ -23,7 +23,7 @@ public class User {
 	private @Column(name="full_name", length=50) String fullName;
 	private @Column(name="identification_number", length=50) String identificationNumber;
 
-	private @ManyToMany(fetch = FetchType.EAGER) 
+	private @ManyToMany(fetch=FetchType.LAZY)
 	@JoinTable(
 			name = "user_roles",
 			joinColumns = {@JoinColumn(name = "user_id")},

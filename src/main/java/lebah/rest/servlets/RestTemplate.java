@@ -2,8 +2,12 @@ package lebah.rest.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -15,6 +19,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
+
+import demo.graphql.HelloDataFetcherProvider;
+import demo.services.GraphQLDataFetcherProvider;
+import demo.services.GraphQLService;
+import demo.services.UserDataFetcherProvider;
+import graphql.ExecutionResult;
 import lebah.rest.jetty.JettyApp;
 
 /**
@@ -31,6 +42,29 @@ public class RestTemplate extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 	protected String[] params = null;
+	
+	//GraphQL
+	private GraphQLService graphQLService;
+    static class GraphQLRequest {
+        String query;
+        Map<String, Object> variables;
+    }
+    private final Gson gson = new Gson();
+    
+    public void init(ServletConfig config) {
+    	System.out.println("Initalizing GraphQL Service.");
+    	graphQLService = new GraphQLService(JettyApp.graphQLProviders);
+    	
+    }
+    
+    //GraphQL
+  	void doGraphQL(HttpServletRequest req, HttpServletResponse res) throws IOException {
+          GraphQLRequest gqlRequest = gson.fromJson(req.getReader(), GraphQLRequest.class);
+          ExecutionResult executionResult = graphQLService.getGraphQL().execute(gqlRequest.query);  //graphQLService.execute(gqlRequest.query);
+          res.setContentType("application/json");
+          gson.toJson(executionResult.toSpecification(), res.getWriter());
+  		
+  	}
 
 	public static String getAuthorizationHeader(HttpServletRequest req) {
 		return req.getHeader("Authorization");
@@ -85,9 +119,6 @@ public class RestTemplate extends HttpServlet {
 		res.setContentType("application/json");
 		res.setCharacterEncoding("UTF-8");
 
-		String controllerPath = (String) req.getServletContext().getAttribute("controllerPath");
-		if ( controllerPath == null ) controllerPath = "";
-
 		PrintWriter out = res.getWriter();
 		String pathInfo = req.getPathInfo();
 		
@@ -104,61 +135,69 @@ public class RestTemplate extends HttpServlet {
 			pathInfo = pathInfo.substring(0, pathInfo.indexOf("/"));
 			params = paramPath.split("/");
 		}
-
-		String controllerClass = JettyApp.controllersMap.get(pathInfo);
-		
-		try {
-
-			Object object = Class.forName(controllerClass)
-					.getDeclaredConstructor()
-					.newInstance();
+				
+		if ( "graphql".equals(pathInfo)) {
 			
-			switch ( object ) {
-				case RestServlet restServlet -> {
-					boolean isAuthorized = true;
-					if ( restServlet.needAuthorization() ) {
-						isAuthorized = AuthorizationHandler.isAuthorized(getAuthorizationHeader(req));
+			doGraphQL(req, res);
+			
+		}
+		else {
+			String controllerClass = JettyApp.controllersMap.get(pathInfo);
+			try {
+	
+				Object object = Class.forName(controllerClass)
+						.getDeclaredConstructor()
+						.newInstance();
+				
+				switch ( object ) {
+					case RestServlet restServlet -> {
+						boolean isAuthorized = true;
+						if ( restServlet.needAuthorization() ) {
+							isAuthorized = AuthorizationHandler.isAuthorized(getAuthorizationHeader(req));
+						}
+						if ( isAuthorized )
+							restServlet.doService(req, res, action, params);
+						else
+							showNotAuthorizedMessage(out);
+						
 					}
-					if ( isAuthorized )
-						restServlet.doService(req, res, action, params);
-					else
-						showNotAuthorizedMessage(out);
-					
+					case null -> {
+						System.out.println("Object is Null");
+					}
+					default -> {
+						System.out.println("Switch Default");
+					}
 				}
-				case null -> {
-					System.out.println("Object is Null");
-				}
-				default -> {
-					System.out.println("Switch Default");
-				}
+				
+			} catch ( ClassNotFoundException e ) {
+				res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+				e.printStackTrace();
+				showErrorMessage(out, "Class Not Found Exception has occured.");
+			} catch ( InstantiationException e ) {
+				res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				e.printStackTrace();
+				showErrorMessage(out, "Instantiation Exception has occured.");
+			} catch ( IllegalAccessException e ) {
+				res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				e.printStackTrace();
+				showErrorMessage(out, "Illegal Access Exception has occured.");
+			} catch ( NullPointerException e ) {
+				System.out.println("NULL POINTER");
+				res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				e.printStackTrace();
+				//showBadRequestMessage(out);
+				showErrorMessage(out, "Bad Request.  Path is not defined.");
+			} catch ( Exception e ) {
+				res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				e.printStackTrace();
+				showErrorMessage(out, "An error has occured.");
 			}
-			
-		} catch ( ClassNotFoundException e ) {
-			res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			e.printStackTrace();
-			showErrorMessage(out, "Class Not Found Exception has occured.");
-		} catch ( InstantiationException e ) {
-			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			e.printStackTrace();
-			showErrorMessage(out, "Instantiation Exception has occured.");
-		} catch ( IllegalAccessException e ) {
-			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			e.printStackTrace();
-			showErrorMessage(out, "Illegal Access Exception has occured.");
-		} catch ( NullPointerException e ) {
-			System.out.println("NULL POINTER");
-			res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			e.printStackTrace();
-			//showBadRequestMessage(out);
-			showErrorMessage(out, "Bad Request.  Path is not defined.");
-		} catch ( Exception e ) {
-			res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			e.printStackTrace();
-			showErrorMessage(out, "An error has occured.");
-		}	
+		}
 
 
 	}
+	
+	
 
 	void showDefaultMessage(PrintWriter out) {
 		JSONObject obj = new JSONObject();

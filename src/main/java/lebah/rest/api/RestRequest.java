@@ -39,6 +39,7 @@ public abstract class RestRequest extends JSONData {
 	protected Map<String, Object> response = new HashMap<>();
 	private HttpServletRequest httpServletRequest;
 	private boolean found = false;
+	private final Gson gson = new Gson();
 
 	/**
 	 * Main method being called
@@ -58,7 +59,8 @@ public abstract class RestRequest extends JSONData {
 			Object obj = doAction(req, res, action);
 
 			res.setStatus(HttpServletResponse.SC_OK);
-			out.print(new Gson().toJson(obj));
+			//out.print(new Gson().toJson(obj));
+			out.print(gson.toJson(obj));
 
 
 		} catch ( Exception e ) {
@@ -73,7 +75,8 @@ public abstract class RestRequest extends JSONData {
 			}
 
 			response.put("message", cause.getMessage() != null ? cause.getMessage() : "Message Not Defined.");
-			out.print(new Gson().toJson(response));
+			//out.print(new Gson().toJson(response));
+			out.print(gson.toJson(response));
 
 		}
 	}
@@ -214,7 +217,7 @@ public abstract class RestRequest extends JSONData {
 			Class<?>[] parameterTypes = method.getParameterTypes();
 			if (parameterTypes.length == 1) {
 				Class<?> paramType = parameterTypes[0];
-				Gson gson = new Gson();
+				//Gson gson = new Gson();
 				Object instance = gson.fromJson(jsonIn.toString(), paramType);
 
 				method.invoke(this, instance);
@@ -261,7 +264,7 @@ public abstract class RestRequest extends JSONData {
 			Class<?>[] parameterTypes = method.getParameterTypes();
 			if (parameterTypes.length == 1) {
 				Class<?> paramType = parameterTypes[0];
-				Gson gson = new Gson();
+				//Gson gson = new Gson();
 				Object instance = gson.fromJson(jsonIn.toString(), paramType);
 
 				method.invoke(this, instance);
@@ -299,7 +302,7 @@ public abstract class RestRequest extends JSONData {
 	 * This method convert an object to a json and then to a response map
 	 */
 	public void sendAsResponse(Object object) {
-		Gson gson = new Gson();
+		//Gson gson = new Gson();
 		//convert object to json
 		String json = gson.toJson(object);
 		//convert json to map 
